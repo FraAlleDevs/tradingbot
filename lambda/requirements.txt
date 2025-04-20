@@ -1,3 +1,4 @@
 ccxt
 boto3
 pandas
+python-dotenv
