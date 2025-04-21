@@ -1,36 +1,109 @@
-# Trading Bot
+# AWS Crypto Trading Bot (SMA20)
 
 This project implements a simple trading bot on AWS that uses an SMA20 strategy. It runs in AWS Lambda, stores trades in DynamoDB and can be triggered via an HTTP API (API Gateway).
-The project should be as AWS native as possible. Everything that has to do with infrastructure should be handled via Terraform.
-The idea is to use AI to support me to implement this project. Since AI tends to over perform and to reach fast a point where the AI don't understand anymore the full context of the project,
-and so don't know how to fix anymore upcoming problems, and I want that we work in really small iteration. First make small code and configurations work and then extend it with more features.
-We want to alawys work in a best practice approach, cost efficient, secure, scalable, maintainable and easy to understand, and always in a way that other people can join the project.
-The AI should alway keep track or their applied changes with something like a changelog, as well as updateing a own AI README file and the project README file with project related information and changes.
-
-## Used AWS Services for the MVP
-
-- AWS Lambda
-- AWS API Gateway
-- AWS DynamoDB
-- AWS Secrets Manager
-- AWS CloudWatch
-- AWS IAM
-- AWS S3
+The project is designed to be AWS-native with all infrastructure managed through Terraform.
 
 ## Features
 
 - Binance Spot Testnet integration
-- SMA20 buy/sell logic
-- Secure access via Secrets Manager
-- Terraform Deployment
-- Python Lambda function
+- SMA20 buy/sell trading logic
+- Secure API key storage via Secrets Manager
+- Trade history in DynamoDB
+- Scheduled execution via CloudWatch Events
+- Configurable deployment via Terraform
+- Local development support
+
+## Used AWS Services
+
+- AWS Lambda - Runs the trading bot code
+- AWS API Gateway - Provides HTTP endpoint to trigger bot
+- AWS DynamoDB - Stores trading signals and history
+- AWS Secrets Manager - Securely stores Binance API credentials
+- AWS CloudWatch - Monitors and logs bot execution
+- AWS IAM - Manages permissions
+- AWS S3 - Stores Lambda deployment packages
 
 ## Prerequisites
 
-- AWS CLI configured
-- Terraform installed
+- AWS CLI configured with appropriate permissions
+- Terraform v1.0.0+
 - Python 3.11
+- Binance account with API keys
 
-## Frontend (planned)
+## Deployment Instructions
 
-A dashboard to visualize the trades and configure the strategies (React + Tailwind).
+The deployment must be done in multiple phases to handle dependencies correctly:
+
+### 1. Local Development Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/aws-crypto-trading-bot.git
+cd aws-crypto-trading-bot
+
+# Set up Python virtual environment
+python -m venv venv
+source venv/bin/activate
+pip install -r lambda/requirements.txt
+
+# Create and configure your .env file for local testing
+cp .env.example .env
+# Edit .env with your Binance API credentials
+```
+
+### 2. Initial Deployment
+
+```bash
+# Phase 1: Create only the S3 bucket first
+cd terraform
+terraform init
+terraform apply -target=aws_s3_bucket.lambda_bucket -target=aws_s3_bucket_public_access_block.lambda_bucket
+
+# Package and upload the Lambda function
+cd ..
+./scripts/lambda_package.sh
+
+# Phase 2: Create everything else
+cd terraform
+terraform apply
+```
+
+### 3. Testing
+
+To test the bot locally:
+
+```bash
+source venv/bin/activate
+python lambda/bot.py
+```
+
+To trigger the deployed Lambda function:
+
+```bash
+aws lambda invoke \
+  --function-name crypto_trading_bot \
+  --payload '{}' \
+  response.json
+```
+
+## Architecture
+
+The bot follows a serverless architecture pattern:
+
+1. Lambda function runs on schedule or via API Gateway
+2. Bot fetches price data from Binance
+3. SMA20 algorithm generates buy/sell signals
+4. Signals are stored in DynamoDB
+5. CloudWatch monitors execution and logs results
+
+## Frontend (Planned)
+
+A dashboard to visualize the trades and configure the strategies (React + Tailwind CSS).
+
+## Project Management
+
+This project follows an iterative development approach:
+
+- CHANGELOG.md tracks all changes
+- CLAUDE.md contains build commands and style guidelines
+- Security best practices enforced throughout
