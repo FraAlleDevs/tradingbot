@@ -48,40 +48,20 @@ else
     exit 1
 fi
 
-# Get AWS account ID
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-if [ $? -ne 0 ]; then
-    echo -e "${RED}Error: Failed to get AWS account ID. Check your AWS credentials.${NC}"
+# Get S3 bucket name from Terraform outputs
+echo "Getting S3 bucket name from Terraform..."
+cd terraform
+S3_BUCKET=$(terraform output -raw lambda_bucket_name)
+cd ..
+
+if [ -z "$S3_BUCKET" ]; then
+    echo -e "${RED}Error: Could not retrieve S3 bucket name from Terraform.${NC}"
+    echo "Make sure you've applied the Terraform configuration for the S3 bucket."
     exit 1
 fi
 
-# Set the S3 bucket name
-S3_BUCKET="crypto-trading-lambda-artifacts-${ACCOUNT_ID}"
-
-# Check if the S3 bucket exists
-echo "Checking if S3 bucket exists..."
-if ! aws s3 ls "s3://${S3_BUCKET}" &>/dev/null; then
-    echo -e "${YELLOW}S3 bucket does not exist. Creating bucket ${S3_BUCKET}...${NC}"
-    
-    # Create the bucket
-    if ! aws s3 mb "s3://${S3_BUCKET}" --region $(aws configure get region); then
-        echo -e "${RED}Error: Failed to create S3 bucket.${NC}"
-        echo "Please create the bucket manually or check your permissions."
-        exit 1
-    fi
-    
-    # Enable versioning on the bucket
-    aws s3api put-bucket-versioning --bucket "${S3_BUCKET}" --versioning-configuration Status=Enabled
-    
-    # Block public access
-    aws s3api put-public-access-block --bucket "${S3_BUCKET}" \
-        --public-access-block-configuration "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
-    
-    echo -e "${GREEN}S3 bucket created successfully!${NC}"
-fi
-
 # Upload the package
-echo "Uploading package to S3..."
+echo "Uploading package to S3 bucket: $S3_BUCKET..."
 if aws s3 cp lambda_function.zip "s3://${S3_BUCKET}/lambda_function.zip"; then
     echo -e "${GREEN}Package uploaded to S3 successfully!${NC}"
     echo "S3 location: s3://${S3_BUCKET}/lambda_function.zip"
@@ -92,6 +72,5 @@ else
 fi
 
 echo -e "${YELLOW}Next steps:${NC}"
-echo "1. Deploy this package to AWS Lambda using Terraform"
-echo "2. Ensure environment variables are set correctly in your Lambda configuration"
-echo "3. Test the Lambda function to verify it works as expected"
+echo "1. Deploy the Lambda function using: terraform apply"
+echo "2. Check CloudWatch logs to verify the function works correctly"

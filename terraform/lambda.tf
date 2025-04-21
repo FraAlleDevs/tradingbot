@@ -79,7 +79,6 @@ resource "aws_iam_role_policy_attachment" "lambda_dynamodb" {
 
 # The Lambda function definition
 resource "aws_lambda_function" "trading_bot" {
-  # Instead of filename, use s3_bucket and s3_key
   s3_bucket        = aws_s3_bucket.lambda_bucket.id
   s3_key           = "lambda_function.zip"
   function_name    = "crypto_trading_bot"
@@ -135,21 +134,4 @@ resource "aws_lambda_permission" "allow_eventbridge" {
   source_arn    = aws_cloudwatch_event_rule.hourly_execution.arn
 }
 
-resource "aws_s3_bucket" "lambda_bucket" {
-  bucket = "crypto-trading-lambda-artifacts-${data.aws_caller_identity.current.account_id}"
-  
-  tags = {
-    Project     = "TradingBot"
-    Environment = "Dev"
-  }
-}
-
-# Block public access to the bucket
-resource "aws_s3_bucket_public_access_block" "lambda_bucket" {
-  bucket = aws_s3_bucket.lambda_bucket.id
-  
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
+# S3 bucket for Lambda is defined in s3.tf
