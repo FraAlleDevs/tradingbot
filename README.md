@@ -1,4 +1,4 @@
-# AWS Crypto Trading Bot (SMA20)
+# Trading Bot
 
 This project implements a simple trading bot on AWS that uses an SMA20 strategy. It runs in AWS Lambda, stores trades in DynamoDB and can be triggered via an HTTP API (API Gateway).
 The project should be as AWS native as possible. Everything that has to do with infrastructure should be handled via Terraform.
