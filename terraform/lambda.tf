@@ -92,6 +92,9 @@ resource "aws_lambda_function" "trading_bot" {
   # This is important for detecting changes
   source_code_hash = filebase64sha256("../lambda_function.zip")
   
+  # Add the Lambda layer - using data source for account ID
+  layers = ["arn:aws:lambda:${var.aws_region}:${data.aws_caller_identity.current.account_id}:layer:tradingbot-dependencies:1"]
+  
   # Other settings remain the same
   timeout     = 60
   memory_size = 256

@@ -57,13 +57,18 @@ cp .env.example .env
 # Phase 1: Create only the S3 bucket first
 cd terraform
 terraform init
-terraform apply -target=aws_s3_bucket.lambda_bucket -target=aws_s3_bucket_public_access_block.lambda_bucket
+terraform apply -target=aws_s3_bucket.lambda_bucket
 
-# Package and upload the Lambda function
+# Phase 2: Package and upload Lambda components
 cd ..
-./scripts/lambda_package.sh
+# Create the Lambda layer (dependencies)
+./scripts/create_layer.sh
+# Note the Layer ARN from the output and update it in terraform/lambda.tf
 
-# Phase 2: Create everything else
+# Package and upload the Lambda function code
+./scripts/package_lambda.sh
+
+# Phase 3: Create everything else
 cd terraform
 terraform apply
 ```
