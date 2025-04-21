@@ -43,8 +43,10 @@ crash.log
 
 # AWS
 lambda.zip
+lambda_function.zip
 tradingbot-layer.zip
 python/
+deployment/
 
 # Node.js (for frontend)
 node_modules/
