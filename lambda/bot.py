@@ -6,7 +6,6 @@ import time
 import uuid
 import pandas as pd
 from decimal import Decimal
-import sys
 
 # Check if running locally (either set in env or detected when running as script)
 IS_LOCAL = os.environ.get('IS_LOCAL', 'false').lower() == 'true'
