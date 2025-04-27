@@ -94,12 +94,13 @@ Can't work in July realistically or very little. After that I can contribute aga
 
 1. Should we prioritize extending trading strategy, or focus first on improving the infrastructure?
 
-Trading strategy, it's the main motivating factor. Once we feel we sufficient experience and multiple trading strategies I would
-then make an effort to improve the infrastructure. 
+Trading strategy, it's the main motivating factor. Once we feel we sufficient experience and multiple trading 
+strategies I would then make an effort to improve the infrastructure. 
 
 2. What's your opinion on adding a frontend dashboard now versus later?
 
-I would do it later, you can see performance on the console initially. Once you have more than 2 trading bots, I would build the dashboard. 
+I would do it later, you can see performance on the console initially. Once you have more than 2 trading bots, 
+I would build the dashboard. 
 
 3. Should we integrate with exchanges beyond Binance? If so, which ones and why?
 
@@ -125,7 +126,7 @@ Pure profit and time to earn a dollar.
 
 3. What would you consider a realistic target for the bot's profitability?
 
-4 % per month. 
+1-2 % per month. 
 
 4. What non-financial benefits do you hope to gain from this project?
 
