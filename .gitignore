@@ -70,3 +70,4 @@ logs/
 # Claude and Changelog files
 CLAUDE.md
 CHANGELOG.md
+btcusd_1-min_data.csv
