@@ -1,0 +1,19 @@
+services: 
+  db:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crypto_data
+    environment: 
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: secret 
+      POSTGRES_DB: bitcoin_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - crypto_volume:/var/lib/postgresql/data
+      #- ./dataset:/docker-entrypoint-initdb.d
+
+volumes: 
+  crypto_volume:
+
