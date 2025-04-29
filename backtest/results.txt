@@ -1,0 +1,7 @@
+
+> fraallee@1.0.0 app
+> ts-node ./src/index.ts
+
+Parsing CSV...
+CSV parsed (24.271 s): 620641 rows
+Executing algorithm on all entries...

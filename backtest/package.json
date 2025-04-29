@@ -1,0 +1,20 @@
+{
+  "name": "fraallee",
+  "version": "1.0.0",
+  "description": "test",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "test",
+    "app": "ts-node ./src/index.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "csv-parse": "^5.6.0"
+  }
+}
