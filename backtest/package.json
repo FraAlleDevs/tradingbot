@@ -4,6 +4,10 @@
   "description": "test",
   "main": "src/index.js",
   "type": "module",
+  "engines": {
+    "node": "16",
+    "npm": "8"
+  },
   "scripts": {
     "test": "test",
     "app": "ts-node ./src/index.ts"

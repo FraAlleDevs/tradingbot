@@ -2,11 +2,11 @@
 
 ### Source data
 
-Copy the Bitcoin price data .csv file into `data/data.csv`.
+Specify the file path of your csv file in [./src/csvParser.ts](./src/csvParser.ts#L8).
 
 ### Requirements
 
-To run this, you need to install Node (v16 preferably) and NPM (v8 preferably).
+To run this, you need to install Node and NPM (check the package.json file's [engines](./package.json#L7) field for the versions).
 
 Then install all the dependencies:
 
@@ -14,13 +14,9 @@ Then install all the dependencies:
 npm ci
 ```
 
-### Configuration
-
-The initial file is `./src/index.ts`. Change the parameters in that file to configure the backtest to run.
-
 ### Run the backtest
 
-Run the backtest with:
+The following command will run the file [./src/index.ts](./src/index.ts):
 
 ```sh
 npm run app
