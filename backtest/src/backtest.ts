@@ -66,8 +66,8 @@ export async function backtest(
     timeAlgorithmEnd.getTime() - timeAlgorithmStart.getTime();
 
   console.log(
-    `Algorithm ran (${((algorithmDurationMS / 1_000) / 60).toFixed()} m ${
-      ((algorithmDurationMS / 1_000) % 60)
+    `Algorithm ran (${(algorithmDurationMS / 1_000 / 60).toFixed()} m ${
+      (algorithmDurationMS / 1_000) % 60
     } s)`,
   );
 
