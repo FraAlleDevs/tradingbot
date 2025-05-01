@@ -1,4 +1,4 @@
-import { getSimpleMomentumEstimate } from './algorithm.js';
+import { getSimpleMomentumEstimate } from './algorithms/momentum.js';
 import { backtest } from './backtest.js';
 
 const longTermDays = 0.1;

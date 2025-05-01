@@ -1,5 +1,5 @@
-import { getDataFilterFromDateToDate, getDateAfterDays } from './dateUtils.js';
-import { Estimate, PriceData } from './types.js';
+import { getDataFilterFromDateToDate, getDateAfterDays } from '../dateUtils.js';
+import { Estimate, PriceData } from '../types.js';
 
 /** Calculates the average close price for the given range */
 function getAverage(dataEntries: PriceData[]) {
@@ -48,8 +48,12 @@ export function getSimpleMomentumEstimate(
   const shortTermAverage = getAverage(shortTermDataEntries);
 
   if (shortTermAverage > longTermAverage) {
-    return { signal: 'buy', confidence: 1 };
+    const confidence = (shortTermAverage - longTermAverage) / longTermAverage;
+
+    return { signal: 'buy', confidence: Math.min(confidence, 1) };
   } else {
-    return { signal: 'sell', confidence: 1 };
+    const confidence = (longTermAverage - shortTermAverage) / longTermAverage;
+
+    return { signal: 'sell', confidence: Math.min(confidence, 1) };
   }
 }
