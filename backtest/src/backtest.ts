@@ -56,6 +56,7 @@ function getTrades(
       (algorithmDurationMS / 1_000) % 60
     } s)`,
   );
+  console.log();
 
   return trades;
 }
@@ -143,6 +144,7 @@ function getTradeResults(
     (timeTradesEnd.getTime() - timeTradesStart.getTime()) / 1_000;
 
   console.log(`Trades results calculated (${tradesDurationMS} s)`);
+  console.log();
 
   return tradeResults;
 }

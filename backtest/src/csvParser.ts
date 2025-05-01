@@ -63,6 +63,7 @@ export async function getLocalData(targetDate: Date) {
   console.log(
     `CSV parsed (${csvParsingDurationMS / 1_000} s): ${localData.length} rows`,
   );
+  console.log();
 
   return localData;
 }
@@ -84,6 +85,7 @@ export async function getLocalRangeData(startDate: Date, endDate: Date) {
   console.log(
     `CSV parsed (${csvParsingDurationMS / 1_000} s): ${localData.length} rows`,
   );
+  console.log();
 
   return localData;
 }
