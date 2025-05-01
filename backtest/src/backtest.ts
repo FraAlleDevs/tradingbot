@@ -152,11 +152,12 @@ function getTradeResults(
 export async function backtest(
   fromDate: Date,
   toDate: Date,
+  marginDays: number,
   tradeDollarMaxAmount: number,
   algorithm: Algorithm,
 ) {
-  // Load data from CSV for specific date range (±200 days)
-  const localData = await getLocalRangeData(fromDate, toDate);
+  // Load data from CSV for specific date range
+  const localData = await getLocalRangeData(fromDate, toDate, marginDays);
 
   // Get a list of the moments the bot will trade on
   const tradingMoments = getTradingMoments(localData, fromDate, toDate);

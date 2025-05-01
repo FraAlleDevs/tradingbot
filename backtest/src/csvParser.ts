@@ -46,14 +46,14 @@ async function getDataEntriesFromDateToDate(fromDate: Date, toDate: Date) {
   return data;
 }
 
-export async function getLocalData(targetDate: Date) {
+export async function getLocalData(targetDate: Date, marginDays: number) {
   console.log('Parsing CSV...');
 
   const timeStart = new Date();
 
   const localData = await getDataEntriesFromDateToDate(
-    getDateAfterDays(targetDate, -200),
-    getDateAfterDays(targetDate, +200),
+    getDateAfterDays(targetDate, -marginDays),
+    getDateAfterDays(targetDate, +marginDays),
   );
 
   const timeCSVEnd = new Date();
@@ -68,14 +68,18 @@ export async function getLocalData(targetDate: Date) {
   return localData;
 }
 
-export async function getLocalRangeData(startDate: Date, endDate: Date) {
+export async function getLocalRangeData(
+  startDate: Date,
+  endDate: Date,
+  marginDays: number,
+) {
   console.log('Parsing CSV...');
 
   const timeStart = new Date();
 
   const localData = await getDataEntriesFromDateToDate(
-    getDateAfterDays(startDate, -200),
-    getDateAfterDays(endDate, +200),
+    getDateAfterDays(startDate, -marginDays),
+    getDateAfterDays(endDate, +marginDays),
   );
 
   const timeCSVEnd = new Date();
