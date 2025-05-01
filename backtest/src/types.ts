@@ -8,3 +8,9 @@ export type PriceData = {
 };
 
 export type Signal = 'buy' | 'sell' | 'hold';
+
+export type Estimate = {
+  signal: Signal;
+  /** Number from 0 (low confidence) to 1 (high confidence) */
+  confidence: number;
+};

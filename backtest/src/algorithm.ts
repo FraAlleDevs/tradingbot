@@ -1,6 +1,7 @@
 import { getDataFilterFromDateToDate, getDateAfterDays } from './dateUtils.js';
-import { PriceData, Signal } from './types.js';
+import { Estimate, PriceData } from './types.js';
 
+/** Calculates the average close price for the given range */
 function getAverage(dataEntries: PriceData[]) {
   const closeValues = dataEntries.map(({ close }) => close);
 
@@ -10,6 +11,7 @@ function getAverage(dataEntries: PriceData[]) {
   return averageClose;
 }
 
+/** Filters data entries based on the date */
 function getDataFromDateToDate(
   dataEntries: PriceData[],
   fromDate: Date,
@@ -18,12 +20,13 @@ function getDataFromDateToDate(
   return dataEntries.filter(getDataFilterFromDateToDate(fromDate, toDate));
 }
 
-export function getGuessForMomentum(
+/** Simple momentum trading algorithm */
+export function getSimpleMomentumEstimate(
   dataEntries: PriceData[],
   date: Date,
   longTermDays: number,
   shortTermDays: number,
-): Signal {
+): Estimate {
   const longTermStartDate = getDateAfterDays(date, -longTermDays);
 
   const shortTermStartDate = getDateAfterDays(date, -shortTermDays);
@@ -45,8 +48,8 @@ export function getGuessForMomentum(
   const shortTermAverage = getAverage(shortTermDataEntries);
 
   if (shortTermAverage > longTermAverage) {
-    return 'buy';
+    return { signal: 'buy', confidence: 1 };
   } else {
-    return 'sell';
+    return { signal: 'sell', confidence: 1 };
   }
 }
