@@ -24,25 +24,32 @@ function getTradingMoments(
   );
 }
 
-type Trade = TradingDate & {
-  estimate: Estimate;
+type Trade<Name extends string> = TradingDate & {
+  estimates: Record<Name, Estimate>;
 };
 
 /** Runs the specified algorithm on the given trading moments */
-function getTrades(
+function getTrades<Name extends string>(
   localData: PriceData[],
   tradingMoments: TradingDate[],
-  algorithm: Algorithm,
+  algorithms: Record<string, Algorithm>,
 ) {
   console.log('Executing algorithm on all entries...');
 
   const timeAlgorithmStart = new Date();
 
   const trades = tradingMoments.map(
-    ({ date, entry }): Trade => ({
+    ({ date, entry }): Trade<Name> => ({
       date,
       entry,
-      estimate: algorithm(localData, date),
+      estimates: (Object.entries(algorithms) as [Name, Algorithm][]).reduce(
+        (acc, [name, algorithm]) => {
+          acc[name] = algorithm(localData, date);
+
+          return acc;
+        },
+        {} as Record<Name, Estimate>,
+      ),
     }),
   );
 
@@ -61,81 +68,110 @@ function getTrades(
   return trades;
 }
 
-type TradeResult = {
-  date: Date;
-  signal: Signal;
-  confidence: number;
-  closePrice: number;
-  assets: Assets;
-  /** The bot's assets valuation in $ */
-  valuation: number;
-  /** The percentage difference of the bot's assets valuation in $ */
-  valuationDifference: number;
-  /** The percentage difference of the market's valuation in $ */
-  marketDifference: number;
-};
-
-function getTradeResults(
+function getTradeResultStep<Name extends string>(
+  algorithmNames: Name[],
   tradeDollarMaxAmount: number,
-  initialAssets: Assets,
-  trades: Trade[],
+  initialValuation: number,
+  currentAssets: Record<Name, Assets>,
+  trade: Trade<Name>,
 ) {
-  let assets = {
-    ...initialAssets,
+  const newAssets = algorithmNames.reduce((acc, name) => {
+    acc[name] = calculateNewAssets(
+      currentAssets[name],
+      trade.entry,
+      trade.estimates[name],
+      tradeDollarMaxAmount,
+    );
+
+    return acc;
+  }, {} as Record<Name, Assets>);
+
+  const newValuations = algorithmNames.reduce((acc, name) => {
+    acc[name] = calculateValuation(newAssets[name], trade.entry, trade.date);
+
+    return acc;
+  }, {} as Record<Name, number>);
+
+  const valuationDifferences = algorithmNames.reduce((acc, name) => {
+    acc[name] =
+      (
+        ((newValuations[name] - initialValuation) / initialValuation) *
+        100
+      ).toFixed(2) + '%';
+
+    return acc;
+  }, {} as Record<Name, string>);
+
+  const tradeResultStep = {
+    date: trade.date,
+    closePrice: trade.entry.close,
+    ...algorithmNames.reduce((acc, name) => {
+      acc[name + '-estimate'] = trade.estimates[name];
+      acc[name + '-assets'] = newAssets[name];
+      acc[name + '-valuation'] = newValuations[name];
+      acc[name + '-valuationDifference'] = valuationDifferences[name];
+
+      return acc;
+    }, {} as Record<string, any>),
   };
 
-  const tradeResults: TradeResult[] = [];
+  return { tradeResultStep, newAssets };
+}
 
+function getTradeResults<Name extends string>(
+  tradeDollarMaxAmount: number,
+  initialAssets: Assets,
+  trades: Trade<Name>[],
+) {
   console.log('Calculating trade results...');
 
   const timeTradesStart = new Date();
 
+  const algorithmNames = Object.keys(trades[0].estimates) as Name[];
+
   const initialClosePrice = trades[0].entry.close;
 
   const initialValuation = calculateValuation(
-    assets,
+    initialAssets,
     trades[0].entry,
     trades[0].date,
   );
 
+  const tradeResults: any[] = [];
+
+  let assets = algorithmNames.reduce((acc, name) => {
+    acc[name] = { ...initialAssets };
+
+    return acc;
+  }, {} as Record<Name, Assets>);
+
   // Initial state (just for reference when analyzing)
   tradeResults.push({
     date: trades[0].date,
-    signal: 'hold',
-    confidence: 1,
     closePrice: trades[0].entry.close,
-    assets: { ...assets },
-    valuation: initialValuation,
-    valuationDifference: 0,
-    marketDifference: 0,
+    ...algorithmNames.reduce((acc, name) => {
+      acc[name + '-estimate'] = { signal: 'hold', confidence: 1 };
+      acc[name + '-assets'] = assets[name];
+      acc[name + '-valuation'] = initialValuation;
+      acc[name + '-valuationDifference'] = '0.00%';
+
+      return acc;
+    }, {} as Record<string, any>),
   });
 
   // Recalculate the assets and valuation of the bot after every trade
-  for (const { date, entry, estimate } of trades) {
-    assets = calculateNewAssets(assets, entry, estimate, tradeDollarMaxAmount);
-
-    const valuation = calculateValuation(assets, entry, date);
-
-    const valuationDifference = Number(
-      (((valuation - initialValuation) / initialValuation) * 100).toFixed(2),
+  for (const trade of trades) {
+    const { tradeResultStep, newAssets } = getTradeResultStep(
+      algorithmNames,
+      tradeDollarMaxAmount,
+      initialValuation,
+      assets,
+      trade,
     );
 
-    const marketDifference = Number(
-      (((entry.close - initialClosePrice) / initialClosePrice) * 100).toFixed(
-        2,
-      ),
-    );
+    tradeResults.push(tradeResultStep);
 
-    tradeResults.push({
-      date,
-      signal: estimate.signal,
-      confidence: estimate.confidence,
-      closePrice: entry.close,
-      assets: { ...assets },
-      valuation,
-      valuationDifference,
-      marketDifference,
-    });
+    assets = newAssets;
   }
 
   const timeTradesEnd = new Date();
@@ -149,12 +185,12 @@ function getTradeResults(
   return tradeResults;
 }
 
-export async function backtest(
+export async function backtest<Name extends string>(
   fromDate: Date,
   toDate: Date,
   marginDays: number,
   tradeDollarMaxAmount: number,
-  algorithm: Algorithm,
+  algorithms: Record<Name, Algorithm>,
 ) {
   // Load data from CSV for specific date range
   const localData = await getLocalRangeData(fromDate, toDate, marginDays);
@@ -163,7 +199,7 @@ export async function backtest(
   const tradingMoments = getTradingMoments(localData, fromDate, toDate);
 
   // Get the bot's estimate for each trading moment
-  const trades = getTrades(localData, tradingMoments, algorithm);
+  const trades = getTrades(localData, tradingMoments, algorithms);
 
   // This is the assets the bot will start trading with
   const initialAssets: Assets = {

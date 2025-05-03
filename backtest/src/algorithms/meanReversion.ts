@@ -7,7 +7,7 @@ import { getAverage, getDataFromDateToDate } from './utils.js';
  * - Example: If price dips significantly below a 20-day average, buy expecting a bounce back.
  * - Risk: Doesn’t work well in strong trends.
  */
-export function getMovingAverageEstimate(
+export function getMeanReversionEstimate(
   dataEntries: PriceData[],
   date: Date,
   scopeDays: number,
