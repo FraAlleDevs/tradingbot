@@ -18,7 +18,7 @@ function getTradingMoments(
 ) {
   return localData.filter(getDataFilterFromDateToDate(fromDate, toDate)).map(
     (entry): TradingDate => ({
-      date: new Date(entry.timestamp * 1_000),
+      date: new Date(entry.timestamp),
       entry,
     }),
   );

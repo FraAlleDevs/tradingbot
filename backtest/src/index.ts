@@ -4,7 +4,7 @@ import { getMovingAverageVolumeCompensatedEstimate } from './algorithms/movingAv
 import { backtest } from './backtest.js';
 
 const startDate = new Date('2020-01-01');
-const endDate = new Date('2021-01-01');
+const endDate = new Date('2020-02-01');
 const marginDays = 2;
 const movingAveragelongTermDays = 0.1;
 const movingAverageShortTermDays = 0.025;

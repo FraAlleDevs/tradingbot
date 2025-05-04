@@ -1,9 +1,9 @@
 import { PriceData } from './types.js';
 
 export function getDataFilterFromDateToDate(fromDate: Date, toDate: Date) {
-  const fromDateTimestamp = fromDate.getTime() / 1_000;
+  const fromDateTimestamp = fromDate.getTime();
 
-  const toDateTimestamp = toDate.getTime() / 1_000;
+  const toDateTimestamp = toDate.getTime();
 
   return (entry: PriceData) => {
     try {

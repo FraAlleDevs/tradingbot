@@ -14,7 +14,7 @@ function getDataEntriesStream() {
     .map((row): PriceData | undefined => {
       try {
         return {
-          timestamp: parseInt(row[0]),
+          timestamp: parseInt(row[0]) * 1_000,
           open: parseFloat(row[1]),
           high: parseFloat(row[2]),
           low: parseFloat(row[3]),

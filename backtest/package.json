@@ -10,7 +10,8 @@
   },
   "scripts": {
     "test": "test",
-    "app": "ts-node ./src/index.ts"
+    "app": "ts-node ./src/index.ts",
+    "data-analysis": "ts-node ./src/dataAnalysis.ts"
   },
   "author": "",
   "license": "ISC",
