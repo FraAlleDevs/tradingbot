@@ -149,6 +149,7 @@ function getTradeResults<Name extends string>(
   tradeResults.push({
     date: trades[0].date,
     closePrice: trades[0].entry.close,
+    volume: trades[0].entry.volume,
     ...algorithmNames.reduce((acc, name) => {
       acc[name + '-estimate'] = { signal: 'hold', confidence: 1 };
       acc[name + '-assets'] = assets[name];
