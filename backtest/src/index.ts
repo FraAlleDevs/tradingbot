@@ -1,9 +1,10 @@
 import { getMeanReversionEstimate } from './algorithms/meanReversion.js';
 import { getMovingAverageEstimate } from './algorithms/movingAverage.js';
+import { getMovingAverageVolumeCompensatedEstimate } from './algorithms/movingAverageVolumeCompensated.js';
 import { backtest } from './backtest.js';
 
 const startDate = new Date('2020-01-01');
-const endDate = new Date('2022-01-01');
+const endDate = new Date('2021-01-01');
 const marginDays = 2;
 const movingAveragelongTermDays = 0.1;
 const movingAverageShortTermDays = 0.025;
@@ -38,6 +39,13 @@ const tradeResults = await backtest(
     hold: (dataEntries, date) => ({ signal: 'hold', confidence: 1 }),
     movingAverage: (dataEntries, date) =>
       getMovingAverageEstimate(
+        dataEntries,
+        date,
+        movingAveragelongTermDays,
+        movingAverageShortTermDays,
+      ),
+    movingAverageVolumeCompensated: (dataEntries, date) =>
+      getMovingAverageVolumeCompensatedEstimate(
         dataEntries,
         date,
         movingAveragelongTermDays,

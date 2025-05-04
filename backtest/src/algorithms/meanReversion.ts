@@ -1,6 +1,6 @@
 import { getDateAfterDays } from '../dateUtils.js';
 import { Estimate, PriceData, Signal } from '../types.js';
-import { getAverage, getDataFromDateToDate } from './utils.js';
+import { getAveragePrice, getDataFromDateToDate } from './utils.js';
 
 /** ### Mean Reversion
  * - How it works: Assumes prices tend to return to a historical average.
@@ -20,7 +20,7 @@ export function getMeanReversionEstimate(
     date,
   );
 
-  const scopeAverage = getAverage(scopeDataEntries);
+  const scopeAverage = getAveragePrice(scopeDataEntries);
 
   const lastEntry = scopeDataEntries[scopeDataEntries.length - 1];
 

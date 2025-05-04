@@ -1,13 +1,17 @@
 import { getDataFilterFromDateToDate, getDateAfterDays } from '../dateUtils.js';
 import { Estimate, PriceData, Signal } from '../types.js';
-import { getAveragePrice, getDataFromDateToDate } from './utils.js';
+import {
+  getAveragePrice,
+  getAverageVolume,
+  getDataFromDateToDate,
+} from './utils.js';
 
 /** ### Moving Average Crossover
  * - How it works: Track two moving averages (say, 50-day and 200-day). When the short-term crosses above the long-term, that's a buy signal (and vice versa).
  * - Why it’s used: Easy to implement, works well in trending markets.
  * - Tools: Just need historical price data.
  */
-export function getMovingAverageEstimate(
+export function getMovingAverageVolumeCompensatedEstimate(
   dataEntries: PriceData[],
   date: Date,
   longTermDays: number,
@@ -29,15 +33,30 @@ export function getMovingAverageEstimate(
     date,
   );
 
-  const longTermAverage = getAveragePrice(longTermDataEntries);
+  const longTermAveragePrice = getAveragePrice(longTermDataEntries);
 
-  const shortTermAverage = getAveragePrice(shortTermDataEntries);
+  const shortTermAveragePrice = getAveragePrice(shortTermDataEntries);
 
-  const signal: Signal = shortTermAverage > longTermAverage ? 'buy' : 'sell';
+  const longTermAverageVolume = getAverageVolume(longTermDataEntries);
 
+  const shortTermAverageVolume = getAverageVolume(shortTermDataEntries);
+
+  // If the volume is up by more than 10%, it's considered a spike.
+  const isVolumeSpike =
+    shortTermAverageVolume - longTermAveragePrice > longTermAveragePrice * 0.1;
+
+  const signal: Signal = isVolumeSpike
+    ? shortTermAveragePrice > longTermAveragePrice
+      ? 'buy'
+      : 'sell'
+    : 'hold';
+
+  // If the price changes more than 5%, it's a strong change
   const confidence = Math.min(
     1,
-    Math.abs(shortTermAverage - longTermAverage) / longTermAverage / 10,
+    (Math.abs(shortTermAveragePrice - longTermAveragePrice) /
+      longTermAveragePrice) *
+      0.05,
   );
 
   return { signal, confidence };
