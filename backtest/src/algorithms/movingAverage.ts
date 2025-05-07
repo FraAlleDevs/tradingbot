@@ -35,9 +35,11 @@ export function getMovingAverageEstimate(
 
   const signal: Signal = shortTermAverage > longTermAverage ? 'buy' : 'sell';
 
+  // If the price changes more than 5%, it's a strong change
   const confidence = Math.min(
     1,
-    Math.abs(shortTermAverage - longTermAverage) / longTermAverage / 10,
+    (Math.abs(shortTermAverage - longTermAverage) / longTermAverage) *
+      (1 / 0.05),
   );
 
   return { signal, confidence };

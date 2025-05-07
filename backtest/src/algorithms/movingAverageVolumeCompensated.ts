@@ -43,7 +43,8 @@ export function getMovingAverageVolumeCompensatedEstimate(
 
   // If the volume is up by more than 10%, it's considered a spike.
   const isVolumeSpike =
-    shortTermAverageVolume - longTermAveragePrice > longTermAveragePrice * 0.1;
+    shortTermAverageVolume - longTermAverageVolume >
+    longTermAverageVolume * 0.1;
 
   const signal: Signal = isVolumeSpike
     ? shortTermAveragePrice > longTermAveragePrice
@@ -56,7 +57,7 @@ export function getMovingAverageVolumeCompensatedEstimate(
     1,
     (Math.abs(shortTermAveragePrice - longTermAveragePrice) /
       longTermAveragePrice) *
-      0.05,
+      (1 / 0.05),
   );
 
   return { signal, confidence };
