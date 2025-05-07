@@ -1,3 +1,4 @@
+import readline from 'readline';
 import { Assets, calculateNewAssets, calculateValuation } from './assets.js';
 import { getLocalRangeData } from './csvParser.js';
 import { getDataFilterFromDateToDate } from './dateUtils.js';
@@ -38,8 +39,28 @@ function getTrades<Name extends string>(
 
   const timeAlgorithmStart = new Date();
 
-  const trades = tradingMoments.map(
-    ({ date, entry }): Trade<Name> => ({
+  let calculatedTrades = 0;
+
+  let lastProgressTrackElapsedTime = 10_000;
+
+  function trackProgress() {
+    const elapsedTime = new Date().getTime() - timeAlgorithmStart.getTime();
+
+    if (elapsedTime > lastProgressTrackElapsedTime * 1.5) {
+      lastProgressTrackElapsedTime = elapsedTime;
+
+      console.log(
+        `(${Math.floor(elapsedTime / 1_000 / 60)} m ${Math.floor(
+          (elapsedTime / 1_000) % 60,
+        )} s) - ${calculatedTrades}/${tradingMoments.length} - ${Math.floor(
+          (100 * calculatedTrades) / tradingMoments.length,
+        )}%`,
+      );
+    }
+  }
+
+  const trades = tradingMoments.map(({ date, entry }) => {
+    const trade: Trade<Name> = {
       date,
       entry,
       estimates: (Object.entries(algorithms) as [Name, Algorithm][]).reduce(
@@ -50,8 +71,14 @@ function getTrades<Name extends string>(
         },
         {} as Record<Name, Estimate>,
       ),
-    }),
-  );
+    };
+
+    calculatedTrades++;
+
+    trackProgress();
+
+    return trade;
+  });
 
   const timeAlgorithmEnd = new Date();
 
@@ -59,9 +86,9 @@ function getTrades<Name extends string>(
     timeAlgorithmEnd.getTime() - timeAlgorithmStart.getTime();
 
   console.log(
-    `Algorithm ran (${(algorithmDurationMS / 1_000 / 60).toFixed()} m ${
-      (algorithmDurationMS / 1_000) % 60
-    } s)`,
+    `Algorithm ran (${Math.floor(
+      algorithmDurationMS / 1_000 / 60,
+    )} m ${Math.floor((algorithmDurationMS / 1_000) % 60)} s)`,
   );
   console.log();
 

@@ -10,8 +10,8 @@ export function calculateValuation(
   dataEntry: PriceData,
   date: Date,
 ) {
-  const valuation = Number(
-    (assets.dollar + assets.bitcoin * dataEntry.close).toFixed(),
+  const valuation = Math.floor(
+    assets.dollar + assets.bitcoin * dataEntry.close,
   );
 
   return valuation;
