@@ -32,7 +32,7 @@ export function getMeanReversionVolumeCompensatedEstimate(
 
   const lastPrice = lastEntry.close;
 
-  const lastVolume = lastEntry.close;
+  const lastVolume = lastEntry.volume;
 
   // If the volume is up by more than 100%, it's considered a spike.
   const isVolumeSpike =
