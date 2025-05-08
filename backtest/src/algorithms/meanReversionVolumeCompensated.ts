@@ -34,9 +34,9 @@ export function getMeanReversionVolumeCompensatedEstimate(
 
   const lastVolume = lastEntry.close;
 
-  // If the volume is up by more than 10%, it's considered a spike.
+  // If the volume is up by more than 100%, it's considered a spike.
   const isVolumeSpike =
-    lastVolume - scopeAverageVolume > scopeAverageVolume * 0.1;
+    lastVolume - scopeAverageVolume > scopeAverageVolume * 1;
 
   const signal: Signal = isVolumeSpike
     ? 'hold'

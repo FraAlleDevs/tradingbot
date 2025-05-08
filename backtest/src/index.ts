@@ -66,13 +66,15 @@ const tradeResults = await backtest(
 const finalTradeResult = tradeResults[tradeResults.length - 1];
 
 console.log('Trading results:');
-Object.keys(finalTradeResult).forEach((key) => {
-  const [name, field] = key.split('-');
+(Object.keys(finalTradeResult) as (keyof typeof finalTradeResult)[]).forEach(
+  (key) => {
+    const [name, field] = key.split('-');
 
-  if (field === 'valuationDifference') {
-    console.log(`  ${name}: ${finalTradeResult[key]}`);
-  }
-});
+    if (field === 'valuationDifference') {
+      console.log(`  ${name}: ${finalTradeResult[key]}`);
+    }
+  },
+);
 console.log();
 
 console.table(tradeResults);

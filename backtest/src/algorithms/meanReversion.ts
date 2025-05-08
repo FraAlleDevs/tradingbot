@@ -20,18 +20,18 @@ export function getMeanReversionEstimate(
     date,
   );
 
-  const scopeAverage = getAveragePrice(scopeDataEntries);
+  const scopeAveragePrice = getAveragePrice(scopeDataEntries);
 
   const lastEntry = scopeDataEntries[scopeDataEntries.length - 1];
 
   const lastPrice = lastEntry.close;
 
-  const signal: Signal = lastPrice < scopeAverage ? 'buy' : 'sell';
+  const signal: Signal = lastPrice < scopeAveragePrice ? 'buy' : 'sell';
 
   // If the price changes more than 5%, it's a strong change
   const confidence = Math.min(
     1,
-    (Math.abs(lastPrice - scopeAverage) / scopeAverage) * (1 / 0.05),
+    (Math.abs(lastPrice - scopeAveragePrice) / scopeAveragePrice) * (1 / 0.05),
   );
 
   return { signal, confidence };

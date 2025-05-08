@@ -49,12 +49,20 @@ function getTrades<Name extends string>(
     if (elapsedTime > lastProgressTrackElapsedTime * 1.5) {
       lastProgressTrackElapsedTime = elapsedTime;
 
+      const ETA = new Date(
+        timeAlgorithmStart.getTime() +
+          elapsedTime * (tradingMoments.length / calculatedTrades),
+      );
+
       console.log(
         `(${Math.floor(elapsedTime / 1_000 / 60)} m ${Math.floor(
           (elapsedTime / 1_000) % 60,
         )} s) - ${calculatedTrades}/${tradingMoments.length} - ${Math.floor(
           (100 * calculatedTrades) / tradingMoments.length,
-        )}%`,
+        )}% - expected to be done by: ${String(ETA.getHours()).padStart(
+          2,
+          '0',
+        )}:${String(ETA.getMinutes()).padStart(2, '0')}`,
       );
     }
   }
@@ -95,6 +103,22 @@ function getTrades<Name extends string>(
   return trades;
 }
 
+type AlgorithmTradeResult<Name extends string> = {
+  [x in `${Name}-estimate`]: Estimate;
+} & {
+  [x in `${Name}-assets`]: number;
+} & {
+  [x in `${Name}-valuation`]: number;
+} & {
+  [x in `${Name}-valuationDifference`]: number;
+};
+
+type TradeResult<Name extends string> = {
+  date: Date;
+  closePrice: number;
+  volume: number;
+} & AlgorithmTradeResult<Name>;
+
 function getTradeResultStep<Name extends string>(
   algorithmNames: Name[],
   tradeDollarMaxAmount: number,
@@ -129,17 +153,20 @@ function getTradeResultStep<Name extends string>(
     return acc;
   }, {} as Record<Name, string>);
 
-  const tradeResultStep = {
+  const tradeResultStep: TradeResult<Name> = {
     date: trade.date,
     closePrice: trade.entry.close,
-    ...algorithmNames.reduce((acc, name) => {
-      acc[name + '-estimate'] = trade.estimates[name];
-      acc[name + '-assets'] = newAssets[name];
-      acc[name + '-valuation'] = newValuations[name];
-      acc[name + '-valuationDifference'] = valuationDifferences[name];
-
-      return acc;
-    }, {} as Record<string, any>),
+    volume: trade.entry.volume,
+    ...algorithmNames.reduce(
+      (acc, name) => ({
+        ...acc,
+        [`${name}-estimate`]: trade.estimates[name],
+        [`${name}-assets`]: newAssets[name],
+        [`${name}-valuation`]: newValuations[name],
+        [`${name}-valuationDifference`]: valuationDifferences[name],
+      }),
+      {} as AlgorithmTradeResult<Name>,
+    ),
   };
 
   return { tradeResultStep, newAssets };
@@ -164,7 +191,7 @@ function getTradeResults<Name extends string>(
     trades[0].date,
   );
 
-  const tradeResults: any[] = [];
+  const tradeResults: TradeResult<Name>[] = [];
 
   let assets = algorithmNames.reduce((acc, name) => {
     acc[name] = { ...initialAssets };
@@ -177,14 +204,16 @@ function getTradeResults<Name extends string>(
     date: trades[0].date,
     closePrice: trades[0].entry.close,
     volume: trades[0].entry.volume,
-    ...algorithmNames.reduce((acc, name) => {
-      acc[name + '-estimate'] = { signal: 'hold', confidence: 1 };
-      acc[name + '-assets'] = assets[name];
-      acc[name + '-valuation'] = initialValuation;
-      acc[name + '-valuationDifference'] = '0.00%';
-
-      return acc;
-    }, {} as Record<string, any>),
+    ...algorithmNames.reduce(
+      (acc, name) => ({
+        ...acc,
+        [`${name}-estimate`]: { signal: 'hold', confidence: 1 },
+        [`${name}-assets`]: assets[name],
+        [`${name}-valuation`]: initialValuation,
+        [`${name}-valuationDifference`]: '0.00%',
+      }),
+      {} as AlgorithmTradeResult<Name>,
+    ),
   });
 
   // Recalculate the assets and valuation of the bot after every trade
