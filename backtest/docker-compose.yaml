@@ -1,0 +1,9 @@
+services:
+  backtest:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backtest
+    volumes:
+      - ./data:/app/data
+      - ./results:/app/results
