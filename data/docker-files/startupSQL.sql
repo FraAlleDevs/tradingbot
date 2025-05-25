@@ -8,19 +8,19 @@ CREATE TABLE IF NOT EXISTS btc_historical (
   PRIMARY KEY(timestamp)
 );
 
-CREATE TABLE IF NOT EXISTS report_card {
-  id SMALLSERIAL NOT NULL GENERATED ALWAYS AS IDENTITY,
+CREATE TABLE IF NOT EXISTS report_card (
+  id SMALLSERIAL NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   algorithm_version VARCHAR(50) NOT NULL,
   start_date TIMESTAMP NOT NULL,
   end_date TIMESTAMP NOT NULL,
   performance REAL NOT NULL,
-  PRIMARY KEY(id),
-};
+  PRIMARY KEY(id)
+);
 
-CREATE TABLE IF NOT EXISTS bot_executions {
-  id BIGSERIAL GENERATED ALWAYS AS IDENTITY,
-  report_card_id SMALLSERIAL,
+CREATE TABLE IF NOT EXISTS bot_executions (
+  id BIGSERIAL NOT NULL,
+  report_card_id SMALLINT,
   symbol VARCHAR(10) NOT NULL DEFAULT 'BTC/USDT',
   signal VARCHAR(5) NOT NULL,
   confidence REAL NOT NULL,
@@ -33,10 +33,7 @@ CREATE TABLE IF NOT EXISTS bot_executions {
   PRIMARY KEY(id),
   CONSTRAINT fk_report FOREIGN KEY (report_card_id) REFERENCES report_card(id),
   CONSTRAINT chk_signal CHECK (signal IN ('BUY', 'SELL', 'HOLD')),
-  CONSTRAINT chk_status CHECK (status IN ('SUCCESS', 'ERROR', 'SKIPPED')),
-};
-
-
+  CONSTRAINT chk_status CHECK (status IN ('SUCCESS', 'ERROR', 'SKIPPED'))
+);
 
 COPY btc_historical FROM '/docker-entrypoint-initdb.d/btcusd_1-min_data.csv' DELIMITER ',' CSV HEADER;
--- this is how you comment in sql file. 
