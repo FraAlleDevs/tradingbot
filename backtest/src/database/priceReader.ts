@@ -1,6 +1,7 @@
 import { getDateAfterDays } from '../dateUtils.js';
 import { PriceData } from '../types.js';
 import { database } from './connection.js';
+import { DbTypes } from './types.js';
 
 async function getDataEntries(fromDate: Date, toDate: Date) {
   const fromTimestamp = fromDate.getTime() / 1_000;
@@ -17,7 +18,7 @@ async function getDataEntries(fromDate: Date, toDate: Date) {
   await database.end();
 
   return response.rows.map(
-    (row: PriceData): PriceData => ({
+    (row: DbTypes['btc_historical']): PriceData => ({
       ...row,
       timestamp: row.timestamp * 1_000,
     }),
