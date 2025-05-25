@@ -3,9 +3,10 @@ import { getMeanReversionVolumeCompensatedEstimate } from './algorithms/meanReve
 import { getMovingAverageEstimate } from './algorithms/movingAverage.js';
 import { getMovingAverageVolumeCompensatedEstimate } from './algorithms/movingAverageVolumeCompensated.js';
 import { backtest } from './backtest.js';
+import { storeResults } from './database/resultWriter.js';
 
 const startDate = new Date('2020-01-01');
-const endDate = new Date('2020-02-01');
+const endDate = new Date('2020-01-02');
 const marginDays = 2;
 const movingAveragelongTermDays = 0.1;
 const movingAverageShortTermDays = 0.025;
@@ -64,16 +65,36 @@ const tradeResults = await backtest(
 
 const finalTradeResult = tradeResults[tradeResults.length - 1];
 
-console.log('Trading results:');
-(Object.keys(finalTradeResult) as (keyof typeof finalTradeResult)[]).forEach(
-  (key) => {
-    const [name, field] = key.split('-');
+const algorithmNames = Object.keys(finalTradeResult.results);
 
-    if (field === 'valuationDifference') {
-      console.log(`  ${name}: ${finalTradeResult[key]}`);
-    }
-  },
-);
+console.log('Trading results:');
+for (const algorithmName of algorithmNames) {
+  console.log(
+    `  ${algorithmName}: ${(
+      finalTradeResult.results[algorithmName].valuationDifference * 100
+    ).toFixed(2)}%`,
+  );
+}
 console.log();
 
-console.table(tradeResults);
+storeResults(startDate, endDate, tradeResults);
+
+console.table(
+  tradeResults.map((tradeResult) => ({
+    date: tradeResult.date,
+    closePrice: tradeResult.closePrice,
+    volume: tradeResult.volume,
+    ...Object.entries(tradeResult.results).reduce(
+      (acc, [algorithm, result]) => ({
+        ...acc,
+        [`${algorithm}-estimate`]: result.estimate,
+        [`${algorithm}-assets`]: result.assets,
+        [`${algorithm}-valuation`]: result.valuation,
+        [`${algorithm}-valuationDifference`]: `${(
+          result.valuationDifference * 100
+        ).toFixed(2)}%`,
+      }),
+      {},
+    ),
+  })),
+);

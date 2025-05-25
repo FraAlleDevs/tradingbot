@@ -103,21 +103,19 @@ function getTrades<Name extends string>(
   return trades;
 }
 
-type AlgorithmTradeResult<Name extends string> = {
-  [x in `${Name}-estimate`]: Estimate;
-} & {
-  [x in `${Name}-assets`]: number;
-} & {
-  [x in `${Name}-valuation`]: number;
-} & {
-  [x in `${Name}-valuationDifference`]: number;
+type AlgorithmTradeResult = {
+  estimate: Estimate;
+  assets: Assets;
+  valuation: number;
+  valuationDifference: number;
 };
 
-type TradeResult<Name extends string> = {
+export type TradeResult<Name extends string> = {
   date: Date;
   closePrice: number;
   volume: number;
-} & AlgorithmTradeResult<Name>;
+  results: Record<Name, AlgorithmTradeResult>;
+};
 
 function getTradeResultStep<Name extends string>(
   algorithmNames: Name[],
@@ -144,29 +142,25 @@ function getTradeResultStep<Name extends string>(
   }, {} as Record<Name, number>);
 
   const valuationDifferences = algorithmNames.reduce((acc, name) => {
-    acc[name] =
-      (
-        ((newValuations[name] - initialValuation) / initialValuation) *
-        100
-      ).toFixed(2) + '%';
+    acc[name] = (newValuations[name] - initialValuation) / initialValuation;
 
     return acc;
-  }, {} as Record<Name, string>);
+  }, {} as Record<Name, number>);
 
   const tradeResultStep: TradeResult<Name> = {
     date: trade.date,
     closePrice: trade.entry.close,
     volume: trade.entry.volume,
-    ...algorithmNames.reduce(
-      (acc, name) => ({
-        ...acc,
-        [`${name}-estimate`]: trade.estimates[name],
-        [`${name}-assets`]: newAssets[name],
-        [`${name}-valuation`]: newValuations[name],
-        [`${name}-valuationDifference`]: valuationDifferences[name],
-      }),
-      {} as AlgorithmTradeResult<Name>,
-    ),
+    results: algorithmNames.reduce((acc, name) => {
+      acc[name] = {
+        estimate: trade.estimates[name],
+        assets: newAssets[name],
+        valuation: newValuations[name],
+        valuationDifference: valuationDifferences[name],
+      } satisfies AlgorithmTradeResult;
+
+      return acc;
+    }, {} as Record<Name, AlgorithmTradeResult>),
   };
 
   return { tradeResultStep, newAssets };
@@ -180,10 +174,6 @@ function getTradeResults<Name extends string>(
   console.log('Calculating trade results...');
 
   const timeTradesStart = new Date();
-
-  console.log('getTradeResults');
-  console.log(trades);
-  console.log();
 
   const algorithmNames = Object.keys(trades[0].estimates) as Name[];
 
@@ -208,15 +198,17 @@ function getTradeResults<Name extends string>(
     date: trades[0].date,
     closePrice: trades[0].entry.close,
     volume: trades[0].entry.volume,
-    ...algorithmNames.reduce(
+    results: algorithmNames.reduce(
       (acc, name) => ({
         ...acc,
-        [`${name}-estimate`]: { signal: 'hold', confidence: 1 },
-        [`${name}-assets`]: assets[name],
-        [`${name}-valuation`]: initialValuation,
-        [`${name}-valuationDifference`]: '0.00%',
+        [name]: {
+          estimate: { signal: 'hold', confidence: 1 },
+          assets: assets[name],
+          valuation: initialValuation,
+          valuationDifference: 0,
+        } satisfies AlgorithmTradeResult,
       }),
-      {} as AlgorithmTradeResult<Name>,
+      {} as Record<Name, AlgorithmTradeResult>,
     ),
   });
 

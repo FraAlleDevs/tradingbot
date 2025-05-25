@@ -1,11 +1,32 @@
 import { PriceData, Signal } from '../types.js';
 
+export type DbReportCard = {
+  id?: number;
+  created_at?: number;
+  algorithm_version: string;
+  start_date: number;
+  end_date: number;
+  /** Percentage of valuation change */
+  performance: number;
+};
+
 export type DbResult = {
-  signal: Signal;
+  id?: number;
+  report_card_id: number;
+  symbol: 'BTC/USDT';
+  signal: Uppercase<Signal>;
   confidence: number;
+  quantity: number;
+  price: number;
+  fees: number;
+  /** Date of execution */
+  execution_time: number;
+  execution_unix: number;
+  status: string;
 };
 
 export type DbTypes = {
   btc_historical: PriceData;
-  results: DbResult;
+  report_card: DbReportCard;
+  bot_executions: DbResult;
 };

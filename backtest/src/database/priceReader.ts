@@ -8,14 +8,10 @@ async function getDataEntries(fromDate: Date, toDate: Date) {
 
   const toTimestamp = toDate.getTime() / 1_000;
 
-  await database.connect();
-
   const response = await database.query(
     'SELECT * from btc_historical WHERE $1 <= timestamp AND timestamp <= $2',
     [fromTimestamp, toTimestamp],
   );
-
-  await database.end();
 
   return response.rows.map(
     (row: DbTypes['btc_historical']): PriceData => ({

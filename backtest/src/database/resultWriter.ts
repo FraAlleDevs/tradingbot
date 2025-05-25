@@ -1,14 +1,57 @@
+import { TradeResult } from '../backtest.js';
+import { Signal } from '../types.js';
 import { database } from './connection.js';
 import { DbTypes } from './types.js';
 
-async function writeResults(results: DbTypes['results'][]) {
-  await database.connect();
+async function writeReportCard(reportCard: DbTypes['report_card']) {
+  const response = await database.query(
+    `INSERT INTO report_card (
+            algorithm_version,
+            start_date,
+            end_date,
+            performance
+          ) 
+          VALUES ($1, $2, $3, $4)`,
+    [
+      reportCard.algorithm_version,
+      reportCard.start_date,
+      reportCard.end_date,
+      reportCard.performance,
+    ],
+  );
 
+  return response.rows[0] as Required<DbTypes['report_card']>;
+}
+
+async function writeResults(results: DbTypes['bot_executions'][]) {
   const responses = await Promise.allSettled(
     results.map((result) =>
       database.query(
-        'INSERT INTO results (signal, confidence) VALUES ($1, $2)',
-        [result.signal, result.confidence],
+        `INSERT INTO bot_executions (
+            report_card_id, 
+            symbol, 
+            signal, 
+            confidence, 
+            quantity, 
+            price, 
+            fees, 
+            execution_time, 
+            execution_unix, 
+            status
+          ) 
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        [
+          result.report_card_id,
+          result.symbol,
+          result.signal,
+          result.confidence,
+          result.quantity,
+          result.price,
+          result.fees,
+          result.execution_time,
+          result.execution_unix,
+          result.status,
+        ],
       ),
     ),
   );
@@ -21,6 +64,55 @@ async function writeResults(results: DbTypes['results'][]) {
   console.log('  Fulfilled: ' + fulfilledRequests.length);
   console.log('  Failed: ' + (responses.length - fulfilledRequests.length));
   console.log();
+}
 
-  await database.end();
+export async function storeResults(
+  fromDate: Date,
+  toDate: Date,
+  tradeResults: TradeResult<string>[],
+) {
+  console.log('Storing trade results...');
+  console.log();
+
+  const finalTradeResult = tradeResults[tradeResults.length - 1];
+
+  const algorithmNames = Object.keys(finalTradeResult.results);
+
+  for (const algorithmName of algorithmNames) {
+    console.log(`Storing ${algorithmName}`);
+    console.log(`  report_card...`);
+
+    const report = await writeReportCard({
+      algorithm_version: algorithmName,
+      start_date: fromDate.getDate() / 1_000,
+      end_date: toDate.getDate() / 1_000,
+      performance: finalTradeResult.results[algorithmName].valuationDifference,
+    });
+
+    console.log(`  report_card id: ${report.id}`);
+
+    console.log(`  bot_executions...`);
+
+    const results = tradeResults.map(
+      (tradeResult): DbTypes['bot_executions'] => ({
+        report_card_id: report.id,
+        symbol: 'BTC/USDT',
+        signal: tradeResult.results[
+          algorithmName
+        ].estimate.signal.toUpperCase() as Uppercase<Signal>,
+        confidence: tradeResult.results[algorithmName].estimate.confidence,
+        quantity: 0,
+        price: 0,
+        fees: 0,
+        /** Date of execution */
+        execution_time: 0,
+        execution_unix: 0,
+        status: 'SUCCESS',
+      }),
+    );
+
+    await writeResults(results);
+
+    console.log();
+  }
 }
