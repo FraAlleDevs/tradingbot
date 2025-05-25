@@ -1,9 +1,10 @@
 import { Client } from 'pg';
 
 export const database = new Client({
-  user: 'root',
-  password: 'mypassword1234',
-  host: 'localhost',
-  port: 5432,
-  database: 'bitcoin_db',
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  database: process.env.DB_NAME,
 });
+

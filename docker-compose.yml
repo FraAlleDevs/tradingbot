@@ -1,0 +1,46 @@
+services: 
+  db:
+    build:
+      context: ./data/docker-files/
+      dockerfile: Dockerfile
+    container_name: crypto_data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d bitcoin_db"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    environment: 
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} 
+      POSTGRES_DB: bitcoin_db
+    ports:
+      - "5432:5432"
+    networks:
+      - crypto_network
+    volumes:
+      - crypto_volume:/var/lib/postgresql/data
+      #- ./dataset:/docker-entrypoint-initdb.d
+  backtest:
+    build:
+      context: ./backtest/
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment: 
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=bitcoin_db
+      - DB_USER=root
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+    container_name: backtest
+    networks:
+      - crypto_network
+
+volumes: 
+  crypto_volume:
+
+networks:
+  crypto_network:
+    driver: bridge
