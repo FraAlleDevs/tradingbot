@@ -12,15 +12,18 @@
     "test": "test",
     "app": "ts-node ./src/index.ts",
     "app:file": "npm run app > ./results/result.txt",
-    "data-analysis": "ts-node ./src/dataAnalysis.ts"
+    "data-analysis": "ts-node ./src/dataAnalysis.ts",
+    "test-db": "ts-node ./src/database/connection.ts"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/pg": "^8.15.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "csv-parse": "^5.6.0"
+    "csv-parse": "^5.6.0",
+    "pg": "^8.16.0"
   }
 }
