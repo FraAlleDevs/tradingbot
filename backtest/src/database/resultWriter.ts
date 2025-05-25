@@ -30,7 +30,7 @@ async function writeReportCard(reportCard: DbTypes['report_card']) {
     ],
   );
 
-  return response.rows[0] as Required<DbTypes['report_card']>;
+  return response.rows[0] as Pick<Required<DbTypes['report_card']>, 'id'>;
 }
 
 async function writeResults(results: DbTypes['bot_executions'][]) {
@@ -70,9 +70,9 @@ async function writeResults(results: DbTypes['bot_executions'][]) {
     (res) => res.status === 'fulfilled',
   );
 
-  console.log('Requests: ' + responses.length);
-  console.log('  Fulfilled: ' + fulfilledRequests.length);
-  console.log('  Failed: ' + (responses.length - fulfilledRequests.length));
+  console.log('    Requests: ' + responses.length);
+  console.log('      Fulfilled: ' + fulfilledRequests.length);
+  console.log('      Failed: ' + (responses.length - fulfilledRequests.length));
   console.log();
 }
 
