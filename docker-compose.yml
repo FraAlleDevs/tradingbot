@@ -39,7 +39,6 @@ services:
       - crypto_network
     volumes:
       - ./backtest/results:/app/results
-      - ./backtest/data:/app/data
 
 volumes: 
   crypto_volume:

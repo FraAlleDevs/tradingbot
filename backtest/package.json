@@ -11,7 +11,7 @@
   "scripts": {
     "test": "test",
     "app": "ts-node ./src/index.ts",
-    "app:file": "npm run app > ./result.txt",
+    "app:file": "npm run app > ./results/result.txt",
     "data-analysis": "ts-node ./src/dataAnalysis.ts",
     "test-db": "ts-node ./src/database/connection.ts"
   },
