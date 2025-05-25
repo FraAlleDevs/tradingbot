@@ -17,4 +17,4 @@ COPY tsconfig.json ./
 COPY src/ ./src/
 
 # Default command - can be overridden
-CMD ["npm", "run", "test-db"]
+CMD ["npm", "run", "app:file"]

@@ -1,6 +1,6 @@
 import readline from 'readline';
 import { Assets, calculateNewAssets, calculateValuation } from './assets.js';
-import { getLocalRangeData } from './csvParser.js';
+import { getLocalRangeData } from './database/priceReader.js';
 import { getDataFilterFromDateToDate } from './dateUtils.js';
 import { Estimate, PriceData, Signal } from './types.js';
 
@@ -181,6 +181,10 @@ function getTradeResults<Name extends string>(
 
   const timeTradesStart = new Date();
 
+  console.log('getTradeResults');
+  console.log(trades);
+  console.log();
+
   const algorithmNames = Object.keys(trades[0].estimates) as Name[];
 
   const initialClosePrice = trades[0].entry.close;
@@ -249,7 +253,7 @@ export async function backtest<Name extends string>(
   tradeDollarMaxAmount: number,
   algorithms: Record<Name, Algorithm>,
 ) {
-  // Load data from CSV for specific date range
+  // Load data from DB for specific date range
   const localData = await getLocalRangeData(fromDate, toDate, marginDays);
 
   // Get a list of the moments the bot will trade on

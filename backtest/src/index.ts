@@ -5,14 +5,13 @@ import { getMovingAverageVolumeCompensatedEstimate } from './algorithms/movingAv
 import { backtest } from './backtest.js';
 
 const startDate = new Date('2020-01-01');
-const endDate = new Date('2021-01-01');
+const endDate = new Date('2020-02-01');
 const marginDays = 2;
 const movingAveragelongTermDays = 0.1;
 const movingAverageShortTermDays = 0.025;
 const meanReversionScopeDays = 1;
 const tradeDollarMaxAmount = 100_000;
 
-console.log('Algorithm: Moving average');
 console.log('Start date: ' + startDate.toISOString().split('T')[0]);
 console.log('End date: ' + endDate.toISOString().split('T')[0]);
 console.log(
