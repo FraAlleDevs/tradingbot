@@ -2,10 +2,10 @@ import { PriceData, Signal } from '../types.js';
 
 export type DbReportCard = {
   id?: number;
-  created_at?: number;
+  created_at?: string;
   algorithm_version: string;
-  start_date: number;
-  end_date: number;
+  start_date: string;
+  end_date: string;
   /** Percentage of valuation change */
   performance: number;
 };
@@ -20,7 +20,7 @@ export type DbResult = {
   price: number;
   fees: number;
   /** Date of execution */
-  execution_time: number;
+  execution_time: string;
   execution_unix: number;
   status: string;
 };

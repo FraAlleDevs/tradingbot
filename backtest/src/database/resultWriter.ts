@@ -3,6 +3,16 @@ import { Signal } from '../types.js';
 import { database } from './connection.js';
 import { DbTypes } from './types.js';
 
+function toDbTimestamp(date: Date) {
+  return (
+    date.toISOString().split('T')[0] +
+    ' ' +
+    date.getHours().toString().padStart(2, '0') +
+    ':' +
+    date.getMinutes().toString().padStart(2, '0')
+  );
+}
+
 async function writeReportCard(reportCard: DbTypes['report_card']) {
   const response = await database.query(
     `INSERT INTO report_card (
@@ -11,7 +21,7 @@ async function writeReportCard(reportCard: DbTypes['report_card']) {
             end_date,
             performance
           ) 
-          VALUES ($1, $2, $3, $4)`,
+          VALUES ($1, $2, $3, $4) RETURNING id`,
     [
       reportCard.algorithm_version,
       reportCard.start_date,
@@ -84,9 +94,10 @@ export async function storeResults(
 
     const report = await writeReportCard({
       algorithm_version: algorithmName,
-      start_date: fromDate.getDate() / 1_000,
-      end_date: toDate.getDate() / 1_000,
-      performance: finalTradeResult.results[algorithmName].valuationDifference,
+      start_date: toDbTimestamp(fromDate),
+      end_date: toDbTimestamp(toDate),
+      performance:
+        finalTradeResult.results[algorithmName].valuationDifference * 100,
     });
 
     console.log(`  report_card id: ${report.id}`);
@@ -105,7 +116,7 @@ export async function storeResults(
         price: 0,
         fees: 0,
         /** Date of execution */
-        execution_time: 0,
+        execution_time: toDbTimestamp(new Date()),
         execution_unix: 0,
         status: 'SUCCESS',
       }),
