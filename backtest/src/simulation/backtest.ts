@@ -1,8 +1,7 @@
-import readline from 'readline';
 import { Assets, calculateNewAssets, calculateValuation } from './assets.js';
-import { getLocalRangeData } from './database/priceReader.js';
-import { getDataFilterFromDateToDate } from './dateUtils.js';
-import { Estimate, PriceData, Signal } from './types.js';
+import { getLocalRangeData } from '../database/priceReader.js';
+import { getDataFilterFromDateToDate } from '../utils/dateUtils.js';
+import { Estimate, PriceData, Signal } from '../utils/types.js';
 
 export type Algorithm = (dataEntries: PriceData[], date: Date) => Estimate;
 

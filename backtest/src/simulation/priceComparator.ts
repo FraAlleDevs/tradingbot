@@ -1,5 +1,8 @@
-import { getDataFilterFromDateToDate, getDateAfterDays } from './dateUtils.js';
-import { PriceData } from './types.js';
+import {
+  getDataFilterFromDateToDate,
+  getDateAfterDays,
+} from '../utils/dateUtils.js';
+import { PriceData } from '../utils/types.js';
 
 function getEntryAtDate(dataEntries: PriceData[], startDate: Date) {
   return dataEntries.filter(

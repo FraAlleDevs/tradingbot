@@ -1,4 +1,4 @@
-import { Estimate, PriceData } from './types.js';
+import { Estimate, PriceData } from '../utils/types.js';
 
 export type Assets = {
   dollar: number;

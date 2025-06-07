@@ -1,4 +1,4 @@
-import { PriceData, Signal } from '../types.js';
+import { PriceData, Signal } from '../utils/types.js';
 
 export type DbReportCard = {
   id?: number;

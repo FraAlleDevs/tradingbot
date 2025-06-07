@@ -1,4 +1,4 @@
-import { PriceData } from './types.js';
+import { PriceData } from '../utils/types.js';
 
 export function getDataFilterFromDateToDate(fromDate: Date, toDate: Date) {
   const fromDateTimestamp = fromDate.getTime();

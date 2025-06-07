@@ -1,5 +1,5 @@
-import { TradeResult } from '../backtest.js';
-import { Signal } from '../types.js';
+import { TradeResult } from '../simulation/backtest.js';
+import { Signal } from '../utils/types.js';
 import { database } from './connection.js';
 import { DbTypes } from './types.js';
 
