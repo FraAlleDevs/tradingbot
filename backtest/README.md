@@ -50,7 +50,7 @@ MOVING_AVERAGE_SHORT_TERM_DAYS=0.025
 # The days the mean is calculated for, for the "mean reversion" algorithm
 MEAN_REVERSION_SCOPE_DAYS=1
 # The maximum amount of dollar value the bot is allowed to trade every day
-TRADE_DOLLAR_MAX_AMOUNT=100_000
+TRADE_DOLLAR_MAX_AMOUNT=100000
 ```
 
 The following command will run the file [./src/index.ts](./src/index.ts):
