@@ -14,13 +14,13 @@ services:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} 
       POSTGRES_DB: bitcoin_db
+      TZ: ${TZ}
     ports:
       - "5432:5432"
     networks:
       - crypto_network
     volumes:
       - crypto_volume:/var/lib/postgresql/data
-      #- ./dataset:/docker-entrypoint-initdb.d
   backtest:
     build:
       context: ./backtest/
@@ -34,6 +34,7 @@ services:
       - DB_NAME=bitcoin_db
       - DB_USER=root
       - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - TZ=${TZ}
     container_name: backtest
     networks:
       - crypto_network

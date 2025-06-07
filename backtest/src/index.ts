@@ -4,7 +4,7 @@ import { getMovingAverageEstimate } from './algorithms/movingAverage.js';
 import { getMovingAverageVolumeCompensatedEstimate } from './algorithms/movingAverageVolumeCompensated.js';
 import { backtest } from './backtest.js';
 import { storeResults } from './database/resultWriter.js';
-
+//TODO: Make it environment variables
 const startDate = new Date('2020-01-01');
 const endDate = new Date('2020-01-02');
 const marginDays = 2;
