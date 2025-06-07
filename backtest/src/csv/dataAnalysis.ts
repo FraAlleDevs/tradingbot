@@ -1,6 +1,9 @@
 import fs from 'node:fs';
 import { getLocalRangeData } from './csvParser.js';
-import { getDataFilterFromDateToDate, getDateAfterDays } from './dateUtils.js';
+import {
+  getDataFilterFromDateToDate,
+  getDateAfterDays,
+} from '../utils/dateUtils.js';
 
 function toISODate(year: number, month: number, day: number) {
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(

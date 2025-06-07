@@ -1,5 +1,5 @@
-import { getDateAfterDays } from '../dateUtils.js';
-import { Estimate, PriceData, Signal } from '../types.js';
+import { getDateAfterDays } from '../utils/dateUtils.js';
+import { Estimate, PriceData, Signal } from '../utils/types.js';
 import { getAveragePrice, getDataFromDateToDate } from './utils.js';
 
 /** ### Mean Reversion

@@ -1,5 +1,5 @@
-import { getDateAfterDays } from '../dateUtils.js';
-import { PriceData } from '../types.js';
+import { getDateAfterDays } from '../utils/dateUtils.js';
+import { PriceData } from '../utils/types.js';
 import { database } from './connection.js';
 import { DbTypes } from './types.js';
 

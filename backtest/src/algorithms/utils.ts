@@ -1,5 +1,5 @@
-import { getDataFilterFromDateToDate } from '../dateUtils.js';
-import { PriceData } from '../types.js';
+import { getDataFilterFromDateToDate } from '../utils/dateUtils.js';
+import { PriceData } from '../utils/types.js';
 
 /** Calculates the average close price for the given range */
 export function getAveragePrice(dataEntries: PriceData[]) {

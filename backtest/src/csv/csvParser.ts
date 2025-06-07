@@ -1,7 +1,10 @@
 import fs from 'fs';
 import { parse } from 'csv-parse';
-import { PriceData } from './types.js';
-import { getDataFilterFromDateToDate, getDateAfterDays } from './dateUtils.js';
+import { PriceData } from '../utils/types.js';
+import {
+  getDataFilterFromDateToDate,
+  getDateAfterDays,
+} from '../utils/dateUtils.js';
 
 function getDataStream() {
   return fs
