@@ -77,3 +77,6 @@ console.table(
     ),
   })),
 );
+
+console.log();
+console.log('DONE!');
