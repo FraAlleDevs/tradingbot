@@ -2,7 +2,17 @@
 
 ### Source data
 
-Specify the file path of your csv file in [./src/csvParser.ts](./src/csvParser.ts#L8).
+To use a CSV, specify the file path in [./src/csv/csvParser.ts](./src/csv/csvParser.ts#L8).
+
+To use a database, configure the [env](./.env) file with the following fields:
+
+```
+DB_USER=xxx
+DB_PASSWORD=xxx
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=bitcoin_db
+```
 
 ### Requirements
 
@@ -12,16 +22,6 @@ Then install all the dependencies:
 
 ```sh
 npm ci
-```
-
-To use a database as the source of the data you'll need to configure the [env](./.env) file with the following fields:
-
-```
-DB_USER=xxx
-DB_PASSWORD=xxx
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=bitcoin_db
 ```
 
 ### Run the backtest
