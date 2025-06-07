@@ -4,13 +4,9 @@ import { database } from './connection.js';
 import { DbTypes } from './types.js';
 
 function toDbTimestamp(date: Date) {
-  return (
-    date.toISOString().split('T')[0] +
-    ' ' +
-    date.getHours().toString().padStart(2, '0') +
-    ':' +
-    date.getMinutes().toString().padStart(2, '0')
-  );
+  // Use ISO string and replace 'T' with space, remove 'Z' for PostgreSQL format
+  // This preserves full millisecond precision: YYYY-MM-DD HH:MM:SS.mmm
+  return date.toISOString().replace('T', ' ').replace('Z', '');
 }
 
 async function writeReportCard(reportCard: DbTypes['report_card']) {
@@ -113,11 +109,12 @@ export async function storeResults(
         ].estimate.signal.toUpperCase() as Uppercase<Signal>,
         confidence: tradeResult.results[algorithmName].estimate.confidence,
         quantity: 0,
-        price: 0,
+        price: tradeResult.closePrice,
         fees: 0,
-        /** Date of execution */
-        execution_time: toDbTimestamp(new Date()),
-        execution_unix: 0,
+        /** Date and time of execution with full precision */
+        execution_time: toDbTimestamp(tradeResult.date),
+        /** Unix timestamp of the trade with millisecond precision */
+        execution_unix: tradeResult.date.getTime() / 1000,
         status: 'SUCCESS',
       }),
     );
