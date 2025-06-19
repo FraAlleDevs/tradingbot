@@ -1,12 +1,12 @@
 # Basic backtest for algorithms
 
-### Source data
+## Source data
 
 To use a CSV, specify the file path in [./src/csv/csvParser.ts](./src/csv/csvParser.ts#L8).
 
 To use a database, configure the [env](./.env) file with the following fields:
 
-```
+```env
 DB_USER=xxx
 DB_PASSWORD=xxx
 DB_HOST=localhost
@@ -14,7 +14,7 @@ DB_PORT=5432
 DB_NAME=bitcoin_db
 ```
 
-### Requirements
+## Requirements
 
 To run this, you need to install Node and NPM (check the package.json file's [engines](./package.json#L7) field for the versions).
 
@@ -24,11 +24,11 @@ Then install all the dependencies:
 npm ci
 ```
 
-### Run the backtest
+## Run the backtest
 
 Before running the backtest, configure your [env](./.env) file with the settings for the backtest you want to run. Here's an example:
 
-```
+```env
 # First day the algorithm will calculate
 START_DATE=2020-01-01
 # Last day the algorithm will calculate
