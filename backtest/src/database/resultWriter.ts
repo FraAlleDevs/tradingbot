@@ -85,6 +85,8 @@ export async function storeResults(
   const algorithmNames = Object.keys(finalTradeResult.results);
 
   for (const algorithmName of algorithmNames) {
+    const timeStoringStart = new Date();
+
     console.log(`Storing ${algorithmName}`);
     console.log(`  report_card...`);
 
@@ -121,6 +123,12 @@ export async function storeResults(
 
     await writeResults(results);
 
+    const timeStoringEnd = new Date();
+
+    const storingDurationMS =
+      (timeStoringEnd.getTime() - timeStoringStart.getTime()) / 1_000;
+
+    console.log(`  stored (${storingDurationMS} s)`);
     console.log();
   }
 }

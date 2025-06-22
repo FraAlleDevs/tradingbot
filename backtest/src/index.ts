@@ -6,10 +6,19 @@ import { backtest } from './simulation/backtest.js';
 import { storeResults } from './database/resultWriter.js';
 import { settings } from './utils/settings.js';
 
+const chunkSizeDays = Math.max(
+  Math.max(
+    settings.movingAveragelongTermDays * 2,
+    settings.meanReversionScopeDays * 2,
+  ),
+  30,
+);
+
 const tradeResults = await backtest(
   settings.startDate,
   settings.endDate,
   settings.marginDays,
+  chunkSizeDays,
   settings.tradeDollarMaxAmount,
   {
     hold: (dataEntries, date) => ({ signal: 'hold', confidence: 1 }),
@@ -56,27 +65,27 @@ for (const algorithmName of algorithmNames) {
 }
 console.log();
 
-storeResults(settings.startDate, settings.endDate, tradeResults);
+await storeResults(settings.startDate, settings.endDate, tradeResults);
 
-console.table(
-  tradeResults.map((tradeResult) => ({
-    date: tradeResult.date,
-    closePrice: tradeResult.closePrice,
-    volume: tradeResult.volume,
-    ...Object.entries(tradeResult.results).reduce(
-      (acc, [algorithm, result]) => ({
-        ...acc,
-        [`${algorithm}-estimate`]: result.estimate,
-        [`${algorithm}-assets`]: result.assets,
-        [`${algorithm}-valuation`]: result.valuation,
-        [`${algorithm}-valuationDifference`]: `${(
-          result.valuationDifference * 100
-        ).toFixed(2)}%`,
-      }),
-      {},
-    ),
-  })),
-);
+// console.table(
+//   tradeResults.map((tradeResult) => ({
+//     date: tradeResult.date,
+//     closePrice: tradeResult.closePrice,
+//     volume: tradeResult.volume,
+//     ...Object.entries(tradeResult.results).reduce(
+//       (acc, [algorithm, result]) => ({
+//         ...acc,
+//         [`${algorithm}-estimate`]: result.estimate,
+//         [`${algorithm}-assets`]: result.assets,
+//         [`${algorithm}-valuation`]: result.valuation,
+//         [`${algorithm}-valuationDifference`]: `${(
+//           result.valuationDifference * 100
+//         ).toFixed(2)}%`,
+//       }),
+//       {},
+//     ),
+//   })),
+// );
 
 console.log();
 console.log('DONE!');

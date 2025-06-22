@@ -36,7 +36,7 @@ function parseBoolean(booleanString?: string) {
 
 console.log('Reading env settings...');
 
-export const settings = {
+const envVariables = {
   /** First day the algorithm will calculate */
   startDate: parseDate('START_DATE'),
   /** Last day the algorithm will calculate */
@@ -67,8 +67,16 @@ export const settings = {
   meanReversionScopeDays: parseNumber('MEAN_REVERSION_SCOPE_DAYS'),
   /** The maximum amount of dollar value the bot is allowed to trade every day */
   tradeDollarMaxAmount: parseNumber('TRADE_DOLLAR_MAX_AMOUNT'),
+};
+
+export const settings = {
+  ...envVariables,
   /** Technical setting: this specifies for how many days before the start date and after the end date should we fetch the data */
-  marginDays: 2,
+  marginDays:
+    Math.max(
+      envVariables.movingAveragelongTermDays,
+      envVariables.meanReversionScopeDays,
+    ) * 1.5,
 };
 
 console.log('Settings read:');

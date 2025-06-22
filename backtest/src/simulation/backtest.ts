@@ -1,6 +1,10 @@
 import { Assets, calculateNewAssets, calculateValuation } from './assets.js';
 import { getLocalRangeData } from '../database/priceReader.js';
-import { getDataFilterFromDateToDate } from '../utils/dateUtils.js';
+import {
+  getDataFilterFromDateToDate,
+  getDateAfterDays,
+  getMillisecondsFromDays,
+} from '../utils/dateUtils.js';
 import { Estimate, PriceData, Signal } from '../utils/types.js';
 
 export type Algorithm = (dataEntries: PriceData[], date: Date) => Estimate;
@@ -22,6 +26,56 @@ function getTradingMoments(
       entry,
     }),
   );
+}
+
+/** Chunks data into processable chunks */
+function getChunks(
+  fromDate: Date,
+  toDate: Date,
+  marginDays: number,
+  chunkSizeDays: number,
+  localData: PriceData[],
+  tradingMoments: TradingDate[],
+) {
+  const chunkSizeMilliseconds = getMillisecondsFromDays(chunkSizeDays);
+
+  const chunksCount = Math.ceil(
+    (toDate.getTime() - fromDate.getTime()) / chunkSizeMilliseconds,
+  );
+
+  console.log(
+    `Chunking into ${chunksCount} chunks, of ${chunkSizeDays} days each...`,
+  );
+
+  const timeChunkStart = new Date();
+
+  const chunkDates = new Array(chunksCount).fill(undefined).map((_, i) => ({
+    fromDate: new Date(fromDate.getTime() + i * chunkSizeMilliseconds),
+    toDate: new Date(fromDate.getTime() + (i + 1) * chunkSizeMilliseconds),
+  }));
+
+  const chunks = chunkDates.map((dates) => ({
+    dates,
+    localData: localData.filter(
+      getDataFilterFromDateToDate(
+        getDateAfterDays(dates.fromDate, -marginDays),
+        getDateAfterDays(dates.toDate, +marginDays),
+      ),
+    ),
+    tradingMoments: tradingMoments.filter(
+      ({ date }) => dates.fromDate <= date && date <= dates.toDate,
+    ),
+  }));
+
+  const timeChunkEnd = new Date();
+
+  const chunkDurationMS =
+    (timeChunkEnd.getTime() - timeChunkStart.getTime()) / 1_000;
+
+  console.log(`Data chunked (${chunkDurationMS} s)`);
+  console.log();
+
+  return chunks;
 }
 
 type Trade<Name extends string> = TradingDate & {
@@ -241,6 +295,7 @@ export async function backtest<Name extends string>(
   fromDate: Date,
   toDate: Date,
   marginDays: number,
+  chunkSizeDays: number,
   tradeDollarMaxAmount: number,
   algorithms: Record<Name, Algorithm>,
 ) {
@@ -250,8 +305,28 @@ export async function backtest<Name extends string>(
   // Get a list of the moments the bot will trade on
   const tradingMoments = getTradingMoments(localData, fromDate, toDate);
 
+  // Chunk data
+  const chunks = getChunks(
+    fromDate,
+    toDate,
+    marginDays,
+    chunkSizeDays,
+    localData,
+    tradingMoments,
+  );
+
   // Get the bot's estimate for each trading moment
-  const trades = getTrades(localData, tradingMoments, algorithms);
+  const trades = chunks
+    .map(({ dates, localData, tradingMoments }, i) => {
+      console.log(
+        `Chunk ${i + 1}/${chunks.length} (${
+          dates.fromDate.toISOString().split('T')[0]
+        } - ${dates.toDate.toISOString().split('T')[0]})`,
+      );
+
+      return getTrades(localData, tradingMoments, algorithms);
+    })
+    .flat();
 
   // This is the assets the bot will start trading with
   const initialAssets: Assets = {

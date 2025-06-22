@@ -22,5 +22,9 @@ export function getDataFilterFromDateToDate(fromDate: Date, toDate: Date) {
 }
 
 export function getDateAfterDays(referenceDate: Date, daysCount: number) {
-  return new Date(referenceDate.getTime() + daysCount * 24 * 60 * 60 * 1_000);
+  return new Date(referenceDate.getTime() + getMillisecondsFromDays(daysCount));
+}
+
+export function getMillisecondsFromDays(days: number) {
+  return days * 24 * 60 * 60 * 1_000;
 }
