@@ -71,3 +71,5 @@ logs/
 CLAUDE.md
 CHANGELOG.md
 btcusd_1-min_data.csv
+
+pnpm-lock.yaml

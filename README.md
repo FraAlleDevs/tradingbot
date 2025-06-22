@@ -114,3 +114,7 @@ This project follows an iterative development approach:
 - CHANGELOG.md tracks all changes
 - CLAUDE.md contains build commands and style guidelines
 - Security best practices enforced throughout
+
+## Python Backtesting Project
+
+A new Python-based backtesting system is being added to this repository. It will support multiple trading strategies (starting with Moving Average and Moving Average Volume Compensated), and will be extensible for future strategies and ensemble/meta-strategies. The project will include data loading, strategy base classes, backtesting engine, and result visualization.
