@@ -1,0 +1,69 @@
+services: 
+  db:
+    build:
+      context: ./data/docker-files/
+      dockerfile: Dockerfile
+    container_name: crypto_data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d bitcoin_db"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    environment: 
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} 
+      POSTGRES_DB: bitcoin_db
+      TZ: ${TZ}
+    ports:
+      - "5432:5432"
+    networks:
+      - crypto_network
+    volumes:
+      - crypto_volume:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+
+  backtest:
+    build:
+      context: ./backtest/
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment: 
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=bitcoin_db
+      - DB_USER=root
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - TZ=${TZ}
+      - START_DATE=${START_DATE}
+      - END_DATE=${END_DATE}
+      - SHOULD_RUN_ALGORITHM_HOLD=${SHOULD_RUN_ALGORITHM_HOLD}
+      - SHOULD_RUN_ALGORITHM_MEAN_REVERSION=${SHOULD_RUN_ALGORITHM_MEAN_REVERSION}
+      - SHOULD_RUN_ALGORITHM_MEAN_REVERSION_VOLUME_COMPENSATED=${SHOULD_RUN_ALGORITHM_MEAN_REVERSION_VOLUME_COMPENSATED}
+      - SHOULD_RUN_ALGORITHM_MOVING_AVERAGE=${SHOULD_RUN_ALGORITHM_MOVING_AVERAGE}
+      - SHOULD_RUN_ALGORITHM_MOVING_AVERAGE_VOLUME_COMPENSATED=${SHOULD_RUN_ALGORITHM_MOVING_AVERAGE_VOLUME_COMPENSATED}
+      - MOVING_AVERAGE_LONG_TERM_DAYS=${MOVING_AVERAGE_LONG_TERM_DAYS}
+      - MOVING_AVERAGE_SHORT_TERM_DAYS=${MOVING_AVERAGE_SHORT_TERM_DAYS}
+      - MEAN_REVERSION_SCOPE_DAYS=${MEAN_REVERSION_SCOPE_DAYS}
+      - TRADE_DOLLAR_MAX_AMOUNT=${TRADE_DOLLAR_MAX_AMOUNT}
+    container_name: backtest
+    networks:
+      - crypto_network
+    volumes:
+      - ./backtest/results:/app/results
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+
+volumes: 
+  crypto_volume:
+
+networks:
+  crypto_network:
+    driver: bridge
