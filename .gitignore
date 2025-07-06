@@ -75,3 +75,6 @@ btcusd_1-min_data.csv
 pnpm-lock.yaml
 
 python_backtest/results/**
+
+#grafana
+grafana-data/

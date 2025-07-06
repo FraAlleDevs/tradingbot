@@ -70,9 +70,11 @@ services:
       - "3000:3000"
     networks:
       - crypto_network
-
+    volumes:
+      - ./grafana-data/:/var/lib/grafana
 volumes: 
   crypto_volume:
+
 
 networks:
   crypto_network:
