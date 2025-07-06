@@ -76,6 +76,7 @@ class Backtester:
         portfolio['holdings'] = 0.0
         portfolio['total_value'] = self.initial_capital
         portfolio['daily_pnl'] = 0.0
+        portfolio['entry_price'] = 0.0  # Track entry price for short positions
         
         # Log initial portfolio state
         logging.info(f"Initial capital: ${self.initial_capital:.2f}")
@@ -98,20 +99,35 @@ class Backtester:
             current_time = data.index[i]
             signal = signals.iloc[i]
             
+            # Get current position from previous iteration
+            if i > 0:
+                prev_position = portfolio['position'].iloc[i-1]
+                position = 1 if prev_position > 0 else (-1 if prev_position < 0 else 0)
+            else:
+                position = 0  # Start with no position
+            
             # Check if it's a new day for profit reinvestment
             if i > 0:
                 prev_time = data.index[i-1]
                 if current_time.date() != prev_time.date():
                     # New day - reinvest profits if enabled
+                    logging.debug(f"New day detected at {current_time}. Previous cash: {portfolio['cash'].iloc[i-1]:.2f}")
                     if self.reinvest_profits and portfolio['total_value'].iloc[i-1] > daily_start_value:
                         profit = portfolio['total_value'].iloc[i-1] - daily_start_value
                         portfolio.loc[current_time, 'cash'] = portfolio['cash'].iloc[i-1] + profit
                         daily_start_value = portfolio['total_value'].iloc[i-1]
+                        logging.debug(f"  Reinvested profit: ${profit:.2f}, New cash: ${portfolio.loc[current_time, 'cash']:.2f}")
                     else:
                         portfolio.loc[current_time, 'cash'] = portfolio['cash'].iloc[i-1]
                         daily_start_value = portfolio['total_value'].iloc[i-1]
+                        logging.debug(f"  No profit reinvestment. Carried forward cash: ${portfolio.loc[current_time, 'cash']:.2f}")
+                else:
+                    # Same day - carry forward cash from previous iteration
+                    portfolio.loc[current_time, 'cash'] = portfolio['cash'].iloc[i-1]
+                    logging.debug(f"Same day at {current_time}. Carried forward cash: ${portfolio.loc[current_time, 'cash']:.2f}")
             else:
                 portfolio.loc[current_time, 'cash'] = self.initial_capital
+                logging.debug(f"First iteration at {current_time}. Set initial cash: ${portfolio.loc[current_time, 'cash']:.2f}")
             
             # Check stop loss if in position
             if position != 0:
@@ -132,29 +148,53 @@ class Backtester:
             
             # Execute trades
             if signal == 1 and position == 0:  # Buy signal
+                logging.debug(f"BUY signal at {current_time}. Cash before trade: ${portfolio['cash'].iloc[i]:.2f}")
                 position = 1
                 entry_price = current_price
                 entry_time = current_time
-                trade_value = portfolio['cash'].iloc[i] * self.position_size
+                trade_value = min(portfolio['cash'].iloc[i], portfolio['cash'].iloc[i] * self.position_size)  # Never trade more than available cash
                 shares = trade_value / current_price
                 portfolio.loc[current_time, 'position'] = shares
                 portfolio.loc[current_time, 'cash'] = portfolio['cash'].iloc[i] - trade_value
+                logging.debug(f"  Trade executed: ${trade_value:.2f} for {shares:.6f} shares. Cash after: ${portfolio.loc[current_time, 'cash']:.2f}")
                 
+                # Safety check: ensure cash doesn't go negative
+                if portfolio.loc[current_time, 'cash'] < 0:
+                    logging.warning(f"Trade would result in negative cash. Adjusting position size.")
+                    portfolio.loc[current_time, 'cash'] = 0
+                    portfolio.loc[current_time, 'position'] = portfolio['cash'].iloc[i] / current_price
+            
             elif signal == -1 and position == 0:  # Sell signal (short)
+                logging.debug(f"SELL signal at {current_time}. Cash before trade: ${portfolio['cash'].iloc[i]:.2f}")
                 position = -1
                 entry_price = current_price
                 entry_time = current_time
-                trade_value = portfolio['cash'].iloc[i] * self.position_size
+                trade_value = min(portfolio['cash'].iloc[i], portfolio['cash'].iloc[i] * self.position_size)  # Never trade more than available cash
                 shares = trade_value / current_price
                 portfolio.loc[current_time, 'position'] = -shares
-                portfolio.loc[current_time, 'cash'] = portfolio['cash'].iloc[i] - trade_value
+                # DO NOT add trade_value to cash for short selling; cash remains unchanged
+                portfolio.loc[current_time, 'cash'] = portfolio['cash'].iloc[i]
+                # Store entry price for short position tracking
+                portfolio.loc[current_time, 'entry_price'] = entry_price
+                logging.debug(f"  Short trade executed: ${trade_value:.2f} for {shares:.6f} shares. Cash after: ${portfolio.loc[current_time, 'cash']:.2f}")
                 
+                # Safety check: ensure cash doesn't go negative (shouldn't happen with short selling)
+                if portfolio.loc[current_time, 'cash'] < 0:
+                    logging.warning(f"Short trade would result in negative cash. This shouldn't happen.")
+                    portfolio.loc[current_time, 'cash'] = 0
+                    portfolio.loc[current_time, 'position'] = -portfolio['cash'].iloc[i] / current_price
+            
             elif signal == -1 and position == 1:  # Close long position
                 shares = portfolio['position'].iloc[i-1] if i > 0 else portfolio['position'].iloc[i]
                 trade_value = shares * current_price
                 portfolio.loc[current_time, 'position'] = 0
                 portfolio.loc[current_time, 'cash'] = portfolio['cash'].iloc[i] + trade_value
                 position = 0
+                
+                # Debug: Log position closing
+                logging.info(f"Closed long position at {current_time}: {shares:.6f} shares @ ${current_price:.2f} = ${trade_value:.2f}")
+                logging.info(f"  Cash before: ${portfolio['cash'].iloc[i]:.2f}, Cash after: ${portfolio.loc[current_time, 'cash']:.2f}")
+                logging.debug(f"  Position reset to 0, entry_price reset to 0")
                 
             elif signal == 1 and position == -1:  # Close short position
                 shares = abs(portfolio['position'].iloc[i-1] if i > 0 else portfolio['position'].iloc[i])
@@ -163,22 +203,111 @@ class Backtester:
                 portfolio.loc[current_time, 'cash'] = portfolio['cash'].iloc[i] + trade_value
                 position = 0
                 
+                # Debug: Log position closing
+                logging.info(f"Closed short position at {current_time}: {shares:.6f} shares @ ${current_price:.2f} = ${trade_value:.2f}")
+                logging.info(f"  Cash before: ${portfolio['cash'].iloc[i]:.2f}, Cash after: ${portfolio.loc[current_time, 'cash']:.2f}")
+                logging.debug(f"  Position reset to 0, entry_price reset to 0")
+                
             else:  # No signal, maintain current position
                 if i > 0:
                     portfolio.loc[current_time, 'position'] = portfolio['position'].iloc[i-1]
-                    portfolio.loc[current_time, 'cash'] = portfolio['cash'].iloc[i]
+                    portfolio.loc[current_time, 'cash'] = portfolio['cash'].iloc[i-1]
+                    portfolio.loc[current_time, 'holdings'] = portfolio['holdings'].iloc[i-1]
+                    portfolio.loc[current_time, 'entry_price'] = portfolio['entry_price'].iloc[i-1]
+                    logging.debug(f"No signal at {current_time}. Carried forward - Position: {portfolio['position'].iloc[i-1]:.6f}, Cash: ${portfolio['cash'].iloc[i-1]:.2f}, Holdings: ${portfolio['holdings'].iloc[i-1]:.2f}")
                 else:
                     portfolio.loc[current_time, 'position'] = 0
                     portfolio.loc[current_time, 'cash'] = self.initial_capital
+                    portfolio.loc[current_time, 'holdings'] = 0
+                    portfolio.loc[current_time, 'entry_price'] = 0.0
+                    logging.debug(f"First iteration no signal at {current_time}. Set defaults - Position: 0, Cash: ${self.initial_capital:.2f}, Holdings: 0")
             
             # Calculate current holdings value
-            portfolio.loc[current_time, 'holdings'] = portfolio['position'].iloc[i] * current_price
+            current_position = portfolio['position'].iloc[i]
+            if current_position > 0:  # Long position
+                portfolio.loc[current_time, 'holdings'] = current_position * current_price
+            elif current_position < 0:  # Short position
+                if position == -1:  # We're actually in a short position
+                    short_shares = abs(current_position)
+                    short_entry_price = portfolio['entry_price'].iloc[i] if portfolio['entry_price'].iloc[i] > 0 else entry_price
+                    short_pnl = (short_entry_price - current_price) * short_shares
+                    portfolio.loc[current_time, 'holdings'] = short_pnl
+                else:
+                    # Position was closed, holdings should be zero
+                    portfolio.loc[current_time, 'holdings'] = 0
+            else:  # No position
+                portfolio.loc[current_time, 'holdings'] = 0
             
             # Calculate total portfolio value
-            portfolio.loc[current_time, 'total_value'] = (
-                portfolio['cash'].iloc[i] + portfolio['holdings'].iloc[i]
-            )
-            
+            total_value = portfolio['cash'].iloc[i] + portfolio['holdings'].iloc[i]
+            portfolio.loc[current_time, 'total_value'] = total_value
+
+            # Debug: Track significant portfolio value drops
+            if i > 0:
+                prev_value = portfolio['total_value'].iloc[i-1]
+                if prev_value > 0:
+                    drop_pct = (total_value - prev_value) / prev_value
+                    if drop_pct < -0.1:  # Log drops greater than 10%
+                        logging.warning(f"Significant portfolio drop at {current_time}: {prev_value:.2f} -> {total_value:.2f} ({drop_pct:.1%})")
+                        logging.warning(f"  Cash: {portfolio['cash'].iloc[i]:.2f}, Holdings: {portfolio['holdings'].iloc[i]:.2f}")
+                        logging.warning(f"  Position: {portfolio['position'].iloc[i]:.6f}, Price: {current_price:.2f}")
+                    
+                    # CRITICAL: Stop simulation if portfolio drops by more than 50% in one step
+                    if drop_pct < -0.5:
+                        logging.error(f"CRITICAL: Portfolio dropped by {drop_pct:.1%} at {current_time}. This is unrealistic. Stopping simulation.")
+                        print(f"❌ CRITICAL ERROR: Portfolio dropped by {drop_pct:.1%} at {current_time}. Stopping simulation.")
+                        # Fill remaining rows with the last valid values
+                        for j in range(i + 1, total_rows):
+                            remaining_time = data.index[j]
+                            portfolio.loc[remaining_time, 'position'] = portfolio['position'].iloc[i-1]
+                            portfolio.loc[remaining_time, 'cash'] = portfolio['cash'].iloc[i-1]
+                            portfolio.loc[remaining_time, 'holdings'] = portfolio['holdings'].iloc[i-1]
+                            portfolio.loc[remaining_time, 'total_value'] = portfolio['total_value'].iloc[i-1]
+                            portfolio.loc[remaining_time, 'daily_pnl'] = 0
+                            portfolio.loc[remaining_time, 'entry_price'] = portfolio['entry_price'].iloc[i-1]
+                        break
+
+            # After all portfolio updates, add detailed debug logging
+            logging.debug(f"{current_time}: Position={portfolio['position'].iloc[i]}, Cash={portfolio['cash'].iloc[i]:.2f}, Holdings={portfolio['holdings'].iloc[i]:.2f}, Total={portfolio['total_value'].iloc[i]:.2f}, Signal={signal}")
+
+            # Forced liquidation if portfolio value drops below $1
+            if total_value < 1:
+                logging.warning(f"Portfolio value dropped below $1 at {current_time}. FORCED LIQUIDATION.")
+                print(f"⚠️  FORCED LIQUIDATION: Portfolio value dropped below $1 at {current_time}")
+                # Close all positions, set everything to zero
+                portfolio.loc[current_time, 'position'] = 0
+                portfolio.loc[current_time, 'cash'] = 0
+                portfolio.loc[current_time, 'holdings'] = 0
+                portfolio.loc[current_time, 'total_value'] = 0
+                portfolio.loc[current_time, 'daily_pnl'] = 0
+                portfolio.loc[current_time, 'entry_price'] = 0
+                # Fill remaining rows with zeros
+                for j in range(i + 1, total_rows):
+                    remaining_time = data.index[j]
+                    portfolio.loc[remaining_time, 'position'] = 0
+                    portfolio.loc[remaining_time, 'cash'] = 0
+                    portfolio.loc[remaining_time, 'holdings'] = 0
+                    portfolio.loc[remaining_time, 'total_value'] = 0
+                    portfolio.loc[remaining_time, 'daily_pnl'] = 0
+                    portfolio.loc[remaining_time, 'entry_price'] = 0
+                break
+
+            # Debug: Log when portfolio goes negative (but continue for now)
+            if total_value < 0:
+                logging.error(f"Portfolio went negative: ${total_value:.2f} at {current_time}")
+                print(f"❌ Portfolio went negative: ${total_value:.2f} at {current_time}")
+                if current_position < 0 and position == -1:
+                    short_shares = abs(current_position)
+                    short_entry_price = portfolio['entry_price'].iloc[i] if portfolio['entry_price'].iloc[i] > 0 else entry_price
+                    short_pnl = (short_entry_price - current_price) * short_shares
+                    logging.error(f"Short position details at {current_time}:")
+                    logging.error(f"  Entry price: ${short_entry_price:.2f}")
+                    logging.error(f"  Current price: ${current_price:.2f}")
+                    logging.error(f"  Short shares: {short_shares:.6f}")
+                    logging.error(f"  Short P&L: ${short_pnl:.2f}")
+                    logging.error(f"  Cash: ${portfolio['cash'].iloc[i]:.2f}")
+                    logging.error(f"  Total value: ${total_value:.2f}")
+
             # Calculate daily P&L
             if i > 0:
                 portfolio.loc[current_time, 'daily_pnl'] = (

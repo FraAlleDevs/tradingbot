@@ -62,12 +62,13 @@ def parse_arguments():
         print("  python main.py --period bear_2022 --stop_loss 0.03 --position_size 0.3")
         sys.exit(1)
 
-def setup_logging(output_dir: str):
+def setup_logging(output_dir, args):
     """
     Setup logging configuration for both file and console output.
     
     Args:
         output_dir (str): Directory path where log file will be saved
+        args: Command line arguments
         
     Creates:
         - Console output for real-time monitoring
@@ -77,13 +78,14 @@ def setup_logging(output_dir: str):
     """
     log_file = os.path.join(output_dir, 'backtest.log')
     
+    log_handlers = [logging.FileHandler(log_file)]
+    if not args.log_to_file_only:
+        log_handlers.append(logging.StreamHandler())
+
     logging.basicConfig(
-        level=logging.INFO,
+        level=logging.DEBUG,
         format='%(asctime)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler(log_file),
-            logging.StreamHandler()
-        ]
+        handlers=log_handlers
     )
 
 def main():
@@ -107,6 +109,7 @@ def main():
         --adx-period: Period for ADX calculation
         --multi-strategy: Run multiple strategies and compare performance
         --strategy: Strategy to use in single strategy mode (default: moving_average)
+        --log-to-file-only: Log only to file, not to console
         
     Execution Flow:
         1. Parse command line arguments
@@ -146,6 +149,7 @@ def main():
                        help='Run multiple strategies and compare performance')
     parser.add_argument('--strategy', choices=['moving_average', 'moving_average_volume_compensated', 'mean_reversion', 'mean_reversion_volume_compensated', 'rsi_bollinger'],
                        default='moving_average', help='Strategy to use in single strategy mode (default: moving_average)')
+    parser.add_argument('--log-to-file-only', action='store_true', help='Log only to file, not to console')
     
     args = parser.parse_args()
 
@@ -155,7 +159,7 @@ def main():
     output_dir = f"{results_base_dir}/results_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     os.makedirs(output_dir, exist_ok=True)
     
-    setup_logging(output_dir)
+    setup_logging(output_dir, args)
     
     # Load data
     logging.info("Loading data...")
@@ -210,17 +214,22 @@ def main():
             ),
             'Mean Reversion': MeanReversionStrategy(
                 window=args.short_window,
+                deviation_threshold=0.005,
                 enable_regime_detection=enable_regime,
                 atr_period=args.atr_period,
                 adx_period=args.adx_period
             ),
             'Mean Reversion Volume Compensated': MeanReversionVolumeCompensatedStrategy(
                 window=args.short_window,
+                deviation_threshold=0.002,
                 enable_regime_detection=enable_regime,
                 atr_period=args.atr_period,
                 adx_period=args.adx_period
             ),
             'RSI + Bollinger Bands': RSIBollingerStrategy(
+                rsi_oversold=30,
+                rsi_overbought=70,
+                volume_threshold=1.5,
                 enable_regime_detection=enable_regime,
                 atr_period=args.atr_period,
                 adx_period=args.adx_period
@@ -276,6 +285,7 @@ def main():
             ax2.set_ylabel('Portfolio Value (USD)')
             ax2.legend()
             ax2.grid(True, alpha=0.3)
+            ax2.set_ylim(bottom=0)  # Ensure y-axis starts at 0
             plt.tight_layout()
             plot_filename = os.path.join(output_dir, f"{strategy_name.replace(' ', '_').replace('/', '_')}_plot.png")
             plt.savefig(plot_filename, dpi=300, bbox_inches='tight')
@@ -284,16 +294,34 @@ def main():
         
         # Create comparison plot (do not show, only save)
         plt.figure(figsize=(14, 8))
+        
+        # Debug: Log portfolio value ranges for each strategy
+        for strategy_name, strategy_results in comparison_results['results'].items():
+            portfolio = strategy_results['portfolio']
+            min_val = portfolio['total_value'].min()
+            max_val = portfolio['total_value'].max()
+            logging.info(f"{strategy_name}: Portfolio range ${min_val:.2f} - ${max_val:.2f}")
+        
         for strategy_name, strategy_results in comparison_results['results'].items():
             portfolio = strategy_results['portfolio']
             plt.plot(portfolio.index, portfolio['total_value'], 
                     label=f'{strategy_name} (Return: {strategy_results["total_return"]:.1%})', linewidth=2)
+        
         plt.axhline(y=100, color='red', linestyle='--', alpha=0.7, label='Initial Capital')
         plt.title(f'Strategy Comparison - {args.period.upper()} Market')
         plt.ylabel('Portfolio Value (USD)')
         plt.xlabel('Date')
         plt.legend()
         plt.grid(True, alpha=0.3)
+        
+        # Set reasonable y-axis limits to prevent extreme scaling
+        plt.ylim(bottom=0)  # Ensure y-axis starts at 0
+        
+        # Add a secondary y-axis for better visibility of lower values
+        ax2 = plt.twinx()
+        ax2.set_ylabel('Portfolio Value (USD) - Secondary Scale')
+        ax2.set_ylim(bottom=0, top=200)  # Focus on 0-200 range for secondary axis
+        
         comparison_plot_file = os.path.join(output_dir, 'strategy_comparison.png')
         plt.savefig(comparison_plot_file, dpi=300, bbox_inches='tight')
         plt.close()
@@ -325,6 +353,7 @@ def main():
         elif args.strategy == 'mean_reversion':
             strategy = MeanReversionStrategy(
                 window=args.short_window,
+                deviation_threshold=0.005,
                 enable_regime_detection=enable_regime,
                 atr_period=args.atr_period,
                 adx_period=args.adx_period
@@ -333,6 +362,7 @@ def main():
         elif args.strategy == 'mean_reversion_volume_compensated':
             strategy = MeanReversionVolumeCompensatedStrategy(
                 window=args.short_window,
+                deviation_threshold=0.002,
                 enable_regime_detection=enable_regime,
                 atr_period=args.atr_period,
                 adx_period=args.adx_period
@@ -340,6 +370,9 @@ def main():
             strategy_name = f"Mean Reversion Volume Compensated (window={args.short_window})"
         elif args.strategy == 'rsi_bollinger':
             strategy = RSIBollingerStrategy(
+                rsi_oversold=30,
+                rsi_overbought=70,
+                volume_threshold=1.5,
                 enable_regime_detection=enable_regime,
                 atr_period=args.atr_period,
                 adx_period=args.adx_period
@@ -427,6 +460,7 @@ def main():
         ax2.set_xlabel('Date')
         ax2.legend()
         ax2.grid(True, alpha=0.3)
+        ax2.set_ylim(bottom=0)  # Ensure y-axis starts at 0
         
         plt.tight_layout()
         plot_file = os.path.join(output_dir, 'backtest_results.png')
