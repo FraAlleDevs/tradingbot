@@ -37,3 +37,52 @@ CREATE TABLE IF NOT EXISTS bot_executions (
 );
 
 COPY btc_historical FROM '/docker-entrypoint-initdb.d/btcusd_1-min_data.csv' DELIMITER ',' CSV HEADER;
+
+-- Drop table if exists (for clean setup)
+DROP TABLE IF EXISTS ohlcv_data CASCADE;
+
+-- Main OHLCV table with all Binance API fields
+CREATE TABLE ohlcv_data (
+    -- Primary identifiers
+    symbol VARCHAR(20) NOT NULL,                    -- e.g., 'BTCUSDT', 'ETHUSDT'
+    timeframe VARCHAR(10) NOT NULL,                 -- e.g., '1m', '5m', '15m', '1h', '1d'
+    open_time BIGINT NOT NULL,                      -- Kline open time (timestamp in ms)
+    
+    -- OHLCV core data (using DECIMAL for precision)
+    open_price DECIMAL(20, 8) NOT NULL,            -- Open price
+    high_price DECIMAL(20, 8) NOT NULL,            -- High price  
+    low_price DECIMAL(20, 8) NOT NULL,             -- Low price
+    close_price DECIMAL(20, 8) NOT NULL,           -- Close price
+    volume DECIMAL(20, 8) NOT NULL,                -- Volume (base asset)
+    
+    -- Additional Binance fields
+    close_time BIGINT NOT NULL,                     -- Kline close time (timestamp in ms)
+    quote_volume DECIMAL(25, 8) NOT NULL,          -- Quote asset volume (USDT volume)
+    trades_count INTEGER NOT NULL,                 -- Number of trades
+    taker_buy_base_volume DECIMAL(20, 8) NOT NULL, -- Taker buy base asset volume
+    taker_buy_quote_volume DECIMAL(25, 8) NOT NULL,-- Taker buy quote asset volume
+    
+    -- Metadata
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    -- Primary key (composite)
+    PRIMARY KEY (symbol, timeframe, open_time),
+    
+    -- Constraints
+    CONSTRAINT chk_timeframe CHECK (timeframe IN ('1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '6h', '8h', '12h', '1d', '3d', '1w', '1M')),
+    CONSTRAINT chk_prices_positive CHECK (
+        open_price > 0 AND 
+        high_price > 0 AND 
+        low_price > 0 AND 
+        close_price > 0 AND
+        volume >= 0
+    ),
+    CONSTRAINT chk_high_low CHECK (high_price >= low_price),
+    CONSTRAINT chk_ohlc_logic CHECK (
+        high_price >= open_price AND 
+        high_price >= close_price AND
+        low_price <= open_price AND 
+        low_price <= close_price
+    )
+);
