@@ -2,6 +2,8 @@ import os
 import time
 import pandas as pd
 import matplotlib.pyplot as plt
+import sys
+from datetime import datetime
 from utils.data_loader import load_data, print_data_summary, plot_price_volume
 from strategies.moving_average import MovingAverageStrategy
 from strategies.moving_average_volume_compensated import MovingAverageVolumeCompensatedStrategy
@@ -10,6 +12,16 @@ from strategies.mean_reversion_volume_compensated import MeanReversionVolumeComp
 from backtest.backtester import Backtester
 
 if __name__ == "__main__":
+    # Create output directory inside python_backtest/results/
+    results_base_dir = "python_backtest/results"
+    os.makedirs(results_base_dir, exist_ok=True)
+    output_dir = f"{results_base_dir}/results_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Redirect all output to a log file
+    log_file = open(f"{output_dir}/backtest_log.txt", "w")
+    sys.stdout = log_file
+
     t0 = time.time()
     data = load_data("python_backtest/data/btcusd_1-min_data.csv")
     print(f"Data loaded in {time.time() - t0:.2f} seconds.")
@@ -45,11 +57,13 @@ if __name__ == "__main__":
         total_profit = sum(trade['profit'] for trade in trades)
         print(f"{name} - Total profit: {total_profit:.2f}")
         results[name] = (equity_curve, trades)
-        # Show detailed plot for this strategy
-        backtester.plot()
+        # Save detailed plot for this strategy
+        plot_filename = f"{output_dir}/{name.replace(' ', '_').replace('/', '_')}_plot.png"
+        backtester.plot(save_path=plot_filename)
+        print(f"Plot saved to: {plot_filename}")
     print(f"Backtests run in {time.time() - t3:.2f} seconds.")
 
-    # Plot only equity curves for all strategies
+    # Save comparison plot
     plt.figure(figsize=(14, 7))
     for name, (equity_curve, _) in results.items():
         plt.plot(equity_curve.index, equity_curve, label=f'Equity: {name}', linewidth=2)
@@ -57,6 +71,17 @@ if __name__ == "__main__":
     plt.title('Equity Curve Comparison')
     plt.legend()
     plt.grid(True)
-    plt.show()
+    comparison_filename = f"{output_dir}/comparison_plot.png"
+    plt.savefig(comparison_filename, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"Comparison plot saved to: {comparison_filename}")
 
     print(f"\nTotal script time: {time.time() - t0:.2f} seconds.")
+
+    # Close log file and restore stdout
+    log_file.close()
+    sys.stdout = sys.__stdout__
+    print(f"Results saved to: {output_dir}")
+    print(f"Log file: {output_dir}/backtest_log.txt")
+    print(f"Individual strategy plots: {output_dir}/*_plot.png")
+    print(f"Comparison plot: {output_dir}/comparison_plot.png")

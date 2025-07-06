@@ -36,7 +36,7 @@ class Backtester:
         self.equity_curve = self.portfolio_value / self.initial_cash
         return self.equity_curve
 
-    def plot(self):
+    def plot(self, save_path=None):
         fig, ax1 = plt.subplots(figsize=(14, 7))
         ax1.plot(self.data.index, self.data['Close'], label='Price', color='blue', alpha=0.5)
         ax1.set_ylabel('Price')
@@ -51,7 +51,11 @@ class Backtester:
         ax1.legend(loc='upper left')
         ax2.legend(loc='upper right')
         plt.title('Price, Equity Curve, and Trade Signals')
-        plt.show()
+        if save_path:
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            plt.close()  # Close the plot to free memory
+        else:
+            plt.show()
 
     def get_trade_log(self):
         trades = []
