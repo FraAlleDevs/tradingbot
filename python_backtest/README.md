@@ -1,85 +1,212 @@
-# Python Trading Strategy Backtester
+# Python Backtesting Framework
 
-This project provides a modular Python framework for backtesting and comparing multiple trading strategies on historical price data. It is designed for extensibility and clear analysis, allowing you to add new strategies and visualize their performance.
+A Python-based backtesting framework for cryptocurrency trading strategies, optimized for minute-level day trading with multiple trades per day and daily profit reinvestment.
 
-## Project Structure
+## Features
 
+- **Minute-level data processing** for high-frequency trading analysis
+- **Multiple trading strategies** (Moving Average, Mean Reversion, Volume-compensated variants)
+- **Day trading optimization** with frequent signals and profit reinvestment
+- **Risk management** with configurable stop-loss and position sizing
+- **Performance metrics** including Sharpe ratio, max drawdown, win rate, and profit factor
+- **Market period testing** with predefined bull, bear, crisis, recovery, and recent periods
+- **Comprehensive logging** and visualization with detailed plots
+- **Daily profit reinvestment** to compound gains over time
+
+## Installation
+
+1. Create a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
-python_backtest/
-├── backtest/
-│   └── backtester.py                # Core backtesting engine
-├── strategies/
-│   ├── base.py                      # Abstract base class for all strategies
-│   ├── moving_average.py            # Moving Average strategy
-│   ├── moving_average_volume_compensated.py # MA Volume Compensated strategy
-│   ├── mean_reversion.py            # Mean Reversion strategy
-│   └── mean_reversion_volume_compensated.py # Mean Reversion Volume Compensated
-├── utils/
-│   └── data_loader.py               # Data loading and summary utilities
-├── main.py                          # Main script to run and compare strategies
-├── requirements.txt                 # Python dependencies
-└── README.md                        # This file
+
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
 ```
-
-## Setup
-
-1. **Create and activate a virtual environment:**
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-2. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. **Place your data file** (e.g., `btcusd_1-min_data.csv`) in the appropriate directory. Update the path in `main.py` if needed.
 
 ## Usage
 
-Run the main script:
+### Basic Usage
+
+Run a backtest with default parameters on the recent market period:
+
 ```bash
 python main.py
 ```
 
-- The script will load your data, select a period (e.g., January 2023), and run all implemented strategies.
-- For each strategy, it will print the number of trades, total profit, and show a detailed plot with price, equity curve, and buy/sell markers.
-- At the end, it will display a comparison plot of the equity curves for all strategies.
+### Advanced Usage
 
-## Implemented Strategies
+Test different market periods and customize parameters:
 
-- **Moving Average:**
-  - Buys when the short-term moving average crosses above the long-term, sells on the opposite crossover.
-- **Moving Average Volume Compensated:**
-  - Like Moving Average, but only acts when short-term volume is also above long-term volume (for buys) or below (for sells).
-- **Mean Reversion:**
-  - Buys when price crosses below its rolling mean, sells when it crosses above.
-- **Mean Reversion Volume Compensated:**
-  - Like Mean Reversion, but only acts when volume is above its rolling mean.
+```bash
+# Test bull market with custom parameters
+python main.py --period bull --short-window 15 --long-window 40 --position-size 0.9
 
-## How the Backtest Works
+# Test bear market with tighter stop-loss
+python main.py --period bear --stop-loss 0.015 --min-crossover-strength 0.002
 
-- **Initial Portfolio:** Starts with 100 units of cash.
-- **Trade Logic:**
-  - On a buy signal, invests all available cash into the asset.
-  - On a sell signal, liquidates all holdings back to cash.
-  - Holds position otherwise.
-- **Equity Curve:**
-  - Shows the value of your portfolio over time, relative to the starting capital (1.0 = break-even, 1.2 = +20%, 0.8 = -20%).
-- **Trade Log:**
-  - For each strategy, prints a summary of all trades (entry/exit times, prices, profit) and the total number of trades and profit.
+# Custom date range
+python main.py --period custom --start-date 2023-06-01 --end-date 2023-08-31
 
-## Customization
+# Test crisis period with conservative settings
+python main.py --period crisis --position-size 0.6 --stop-loss 0.025
+```
 
-- **Change the backtest period:** Edit the `start_date` and `end_date` in `main.py`.
-- **Tune strategy parameters:** Adjust window sizes in the strategy constructors in `main.py`.
-- **Add new strategies:** Create a new class in `strategies/` inheriting from `Strategy` and add it to the `strategies` dict in `main.py`.
+### Available Market Periods
 
-## Interpreting Results
+- `bull` (2021): Bull market period for testing uptrend strategies
+- `bear` (2022): Bear market period for testing downtrend strategies  
+- `crisis` (2020-03 to 2020-06): COVID-19 crisis period for stress testing
+- `recovery` (2020-07 to 2020-12): Post-crisis recovery period
+- `recent` (2023): Recent market period (default)
+- `custom`: Use with --start-date and --end-date for custom periods
 
-- **Individual Plots:** For each strategy, see when trades occurred and how the portfolio value evolved.
-- **Comparison Plot:** See which strategy performed best over the selected period.
-- **Trade Log:** Review the number and quality of trades for each approach.
+### Parameters
 
----
+- `--period`: Market period to test (default: recent)
+- `--start-date`: Custom start date (YYYY-MM-DD format)
+- `--end-date`: Custom end date (YYYY-MM-DD format)
+- `--short-window`: Short moving average window (default: 20)
+- `--long-window`: Long moving average window (default: 50)
+- `--min-crossover-strength`: Minimum crossover strength for signals (default: 0.003)
+- `--position-size`: Position size as fraction of capital (default: 0.8)
+- `--stop-loss`: Stop loss percentage (default: 0.02)
+- `--data-path`: Path to CSV data file (default: ../data/btc_usd_1min.csv)
 
-Feel free to experiment with different strategies, parameters, and time periods to find what works best for your data!
+## Day Trading Features
+
+The framework is optimized for active day trading with the following features:
+
+### High-Frequency Signals
+- Reduced minimum crossover strength (0.003) for more frequent signals
+- Short minimum holding period (1 minute) to allow rapid position changes
+- Multiple trades per day to capture short-term price movements
+
+### Aggressive Position Sizing
+- Default 80% position size to maximize capital utilization
+- Configurable position sizing for different risk tolerances
+- Stop-loss protection to limit downside risk
+
+### Profit Reinvestment
+- Daily profit reinvestment to compound gains
+- Capital grows over time as profits are added to available trading capital
+- Optimized for long-term growth through compounding
+
+### Risk Management
+- Configurable stop-loss levels (default 2%)
+- Position sizing controls to manage risk per trade
+- Performance metrics to evaluate strategy effectiveness
+
+## Output
+
+The framework generates comprehensive output including:
+
+1. **Console logging** with real-time progress and results
+2. **Results file** (`results.txt`) with detailed performance metrics
+3. **Log file** (`backtest.log`) with complete execution log
+4. **Price and signals plot** showing BTC price with buy/sell markers
+5. **Portfolio value chart** showing equity curve over time
+6. **Daily P&L distribution** histogram for risk analysis
+
+All output is saved to timestamped directories for easy organization and comparison.
+
+## Performance Metrics
+
+- **Total Return**: Overall percentage gain/loss
+- **Annualized Return**: Return adjusted for time period
+- **Sharpe Ratio**: Risk-adjusted return measure
+- **Max Drawdown**: Largest peak-to-trough decline
+- **Volatility**: Price variability measure
+- **Number of Trades**: Total trading activity
+- **Win Rate**: Percentage of profitable trades
+- **Profit Factor**: Ratio of gross profit to gross loss
+
+## Data Format
+
+The framework expects CSV data with the following columns:
+- `timestamp`: Datetime index
+- `Open`: Opening price
+- `High`: High price
+- `Low`: Low price
+- `Close`: Closing price
+- `Volume`: Trading volume
+
+## Example Results
+
+```
+Backtest Results - RECENT Market
+==================================================
+Period: 2023-01-01 to 2023-12-31
+Strategy: Moving Average (20/50)
+Min Crossover Strength: 0.003
+Position Size: 80.0%
+Stop Loss: 2.0%
+Initial Capital: $100.00
+Final Capital: $156.78
+Total Return: 56.78%
+Annualized Return: 56.78%
+Sharpe Ratio: 1.23
+Max Drawdown: -8.45%
+Volatility: 45.67%
+Number of Trades: 1,247
+Win Rate: 52.3%
+Profit Factor: 1.15
+```
+
+## Contributing
+
+To add new strategies, inherit from the `Strategy` base class and implement the `generate_signals` method. See existing strategies in the `strategies/` directory for examples.
+
+## Environment Configuration (.env)
+
+This project supports configuration via a `.env` file placed in the `python_backtest/` directory. The `.env` file allows you to customize paths and default parameters without changing the code.
+
+### Example `.env` file:
+
+```
+# Output and Data Paths
+RESULTS_DIR=python_backtest/results
+DATA_PATH=./data/btcusd_1-min_data.csv
+
+# Logging
+LOG_LEVEL=INFO
+
+# Default Backtest Parameters
+DEFAULT_PERIOD=bull_2021
+DEFAULT_POSITION_SIZE=0.8
+DEFAULT_STOP_LOSS=0.02
+
+# Plotting
+PLOTS_DPI=300
+PLOTS_FORMAT=png
+
+# Timezone
+TIMEZONE=UTC
+
+# Data Loading
+MAX_ROWS=0  # 0 means no limit
+
+# Notifications (future use)
+EMAIL_NOTIFICATIONS=
+
+# Reproducibility
+RANDOM_SEED=42
+```
+
+### Variable Descriptions
+- `RESULTS_DIR`: Directory where backtest results and plots are saved.
+- `DATA_PATH`: Path to the CSV data file to use for backtesting.
+- `LOG_LEVEL`: Logging verbosity (e.g., INFO, DEBUG).
+- `DEFAULT_PERIOD`: Default market period if not specified via CLI.
+- `DEFAULT_POSITION_SIZE`: Default position size as a fraction of capital.
+- `DEFAULT_STOP_LOSS`: Default stop loss percentage.
+- `PLOTS_DPI`: DPI for saved plots.
+- `PLOTS_FORMAT`: File format for plots (e.g., png, svg).
+- `TIMEZONE`: Timezone for datetime handling.
+- `MAX_ROWS`: Maximum number of rows to load from the data file (0 = no limit).
+- `EMAIL_NOTIFICATIONS`: Email address for notifications (future feature).
+- `RANDOM_SEED`: Random seed for reproducibility.
+
+**To use the `.env` file, simply edit the values as needed. The code will automatically load these settings on startup.**
