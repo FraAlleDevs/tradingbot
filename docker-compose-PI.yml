@@ -60,6 +60,16 @@ services:
       resources:
         limits:
           cpus: '2.0'
+  
+  grafana:
+    image: grafana/grafana:latest
+    container_name: crypto_grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3000:3000"
+    networks:
+      - crypto_network
 
 volumes: 
   crypto_volume:
