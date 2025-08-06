@@ -78,3 +78,7 @@ python_backtest/results/**
 
 #grafana
 grafana-data/
+
+# submodules
+freqtrade
+freqtrade-strategies
